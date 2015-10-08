@@ -1,6 +1,7 @@
 (function() {
 
 var util = OO.util;
+var core = OO.core;
 
 O.evalAST = function(ast) {
   var context = {
@@ -68,7 +69,7 @@ var recEval = function(context, ast) {
   };
   switch (ast[0]) {
     case "program":
-      OO.initializeCT();
+      OO.reset();
       var sequence = ast.slice(1);
       sequence.unshift("seq");
       var scopedAST = ["scope", sequence];
@@ -86,7 +87,7 @@ var recEval = function(context, ast) {
       var className = recEval(context, ast[1]);
       var superClassName = recEval(context, ast[2]);
       var instVarNames = ast[3].map(curriedRecEval(context));
-      return OO.declareClass(className, superClassName, instVarNames);
+      return core.declareClass(className, superClassName, instVarNames);
 
     case "methodDecl":
       var className = recEval(context, ast[1]);
@@ -108,7 +109,7 @@ var recEval = function(context, ast) {
         return recEval(context, ["closure", argNames, args, scopedAST]);
       };
 
-      return OO.declareMethod(className, methodName, closure);
+      return core.declareMethod(className, methodName, closure);
 
     case "closure":
       var argNames = ast[1].map(curriedRecEval(context));
@@ -141,7 +142,7 @@ var recEval = function(context, ast) {
       var scopeRetVal;
       var scopeError;
       try {
-        scopeRetVal = OO.send(recEval(context, blockedAST), "call");
+        scopeRetVal = core.send(recEval(context, blockedAST), "call");
       } catch(e) {
         if (isReturnObject(e) && e.scopeUID === scopeUID) {
           scopeRetVal = e.value;
@@ -178,7 +179,7 @@ var recEval = function(context, ast) {
       var instVarName = ast[1];
       var value = recEval(context, ast[2]);
       var self = context.environment.get("self");
-      return OO.setInstVar(self, instVarName, value);
+      return core.setInstVar(self, instVarName, value);
 
     case "exprStmt":
       return recEval(context, ast[1]);
@@ -203,29 +204,29 @@ var recEval = function(context, ast) {
 
     case "getInstVar":
       var self = context.environment.get("self");
-      return OO.getInstVar(self, ast[1]);
+      return core.getInstVar(self, ast[1]);
 
     case "new":
       var className = recEval(context, ast[1]);
       var args = ast.slice(2).map(curriedRecEval(context));
       args.unshift(className);
-      return OO.instantiate.apply(OO, args);
+      return core.instantiate.apply(core, args);
 
     case "send":
       var recv = recEval(context, ast[1]);
       var messageName = recEval(context, ast[2]);
       var args = ast.slice(3).map(curriedRecEval(context));
       args.unshift(recv, messageName);
-      return OO.send.apply(OO, args);
+      return core.send.apply(core, args);
 
     case "super":
-      var superClassName = OO.sendToClass(context.nameOfHostClass,
+      var superClassName = core.sendToClass(context.nameOfHostClass,
           "getSuperClass");
       var self = context.environment.get("self");
       var messageName = recEval(context, ast[1]);
       var args = ast.slice(2).map(curriedRecEval(context));
       args.unshift(superClassName, self, messageName);
-      return OO.superSend.apply(OO, args);
+      return core.superSend.apply(core, args);
 
     case "block":
       var argNames = ast[1].map(curriedRecEval(context));
@@ -242,7 +243,7 @@ var recEval = function(context, ast) {
         return recEval(context, ["closure", argNames, args, sequence]);
       };
 
-      return OO.instantiate("Block", closure);
+      return core.instantiate("Block", closure);
 
     default:
       throw new Error("Illegal AST!");

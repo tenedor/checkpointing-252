@@ -170,7 +170,8 @@ O {
     <script src="../js/src/prettyPrint.js"></script>
     <script src="../js/src/root.js"></script>
     <script src="../js/src/util.js"></script>
-    <script src="../js/src/class.js"></script>
+    <script src="../js/src/core.js"></script>
+    <script src="../js/src/classes.js"></script>
     <script src="../js/src/eval.js"></script>
   </head>
   <body>
@@ -387,9 +388,9 @@ and <codeBlock>OO.declareMethod("Point", "+",
           </ul>
         </p>
         <h3>Unit Tests</h3>
-        <script src="../js/test/oo-lib-1.js"></script>
+        <script src="../js/test/core.js"></script>
         <p>
-          You can add your own test cases by editing <a href="../js/test/oo-lib-1.js"><code>js/test/oo-lib-1.js</code></a>.
+          You can add your own test cases by editing <a href="../js/test/core.js"><code>js/test/core.js</code></a>.
         </p>
         <h2>Everything's an Object</h2>
         <p>
@@ -462,9 +463,9 @@ and <codeBlock>OO.declareMethod("Point", "+",
           them using the source language, e.g., <codeBlock>def Boolean.isBoolean() { return true; }</codeBlock>
         </p>
         <h3>Unit Tests</h3>
-        <script src="../js/test/oo-lib-2.js"></script>
+        <script src="../js/test/classes.js"></script>
         <p>
-          You can add your own test cases by editing <a href="../js/test/oo-lib-2.js"><code>js/test/oo-lib-2.js</code></a>.
+          You can add your own test cases by editing <a href="../js/test/classes.js"><code>js/test/classes.js</code></a>.
         </p>
         </section>
         <section>
@@ -576,9 +577,9 @@ new Object().m();  // should evaluate to null</codeBlock>
           </table>
         </p>
         <h3>Unit Tests</h3>
-        <script src="../js/test/oo-interpreter-1.js"></script>
+        <script src="../js/test/eval.js"></script>
         <p>
-          You can add your own test cases by editing <a href="../js/test/oo-interpreter-1.js"><code>js/test/oo-interpreter-1.js</code></a>.
+          You can add your own test cases by editing <a href="../js/test/eval.js"><code>js/test/eval.js</code></a>.
         </p>
         <h2>Blocks</h2>
         <p>
@@ -706,9 +707,9 @@ new Object().m();  // evaluates to 5</codeBlock>
           <code>return</code> is always associated with the correct method invocation.
         </p>
         <h3>Unit Tests for Part III</h3>
-        <script src="../js/test/oo-interpreter-2.js"></script>
+        <script src="../js/test/eval-with-blocks.js"></script>
         <p>
-          You can add your own test cases by editing <a href="../js/test/oo-interpreter-2.js"><code>js/test/oo-interpreter-2.js</code></a>.
+          You can add your own test cases by editing <a href="../js/test/eval-with-blocks.js"><code>js/test/eval-with-blocks.js</code></a>.
         </p>
       </section>
       <section>

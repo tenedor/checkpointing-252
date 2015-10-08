@@ -2,19 +2,12 @@
 
 var util = OO.util;
 
-OO.initializeCT = function() {
-  this.classTable = {};
-  this.declareNativeClasses();
-};
+var core = OO.core = {};
 
-OO.declareNativeClasses = function() {
-  this.declareObjectClass();
-  this.declareJSPrimitiveClasses();
-  this.declareBlockClass();
-};
+core.reset = function() {
+  this.classTable = OO.classTable = {};
 
-OO.declareObjectClass = function() {
-  this.ObjectClass = {
+  this.ObjectClass = OO.ObjectClass = {
     name: "Object",
     superClass: null,
     instVarNames: {},
@@ -26,220 +19,9 @@ OO.declareObjectClass = function() {
   };
 
   this.classTable["Object"] = this.ObjectClass;
-
-  this.declareMethod("Object", "initialize", function(self) {});
-
-  this.declareMethod("Object", "===", function(self, x) {
-    return x === self;
-  });
-
-  this.declareMethod("Object", "!==", function(self, x) {
-    return x !== self;
-  });
-
-  this.declareMethod("Object", "isNumber", function(self) {
-    return false;
-  });
-
-  this.declareMethod("Object", "hasProperty", function(self, selector, defType) {
-    util.assertTypes("Object::hasProperty", [
-      {value: selector, varName: "selector", type: "string"},
-      {value: defType, varName: "defType", type: "string"}
-    ]);
-
-    var Constructor = this.classTable[this.getClassName(self)];
-    return this.sendToClass(Constructor, "hasProperty", selector, defType);
-  });
-
-  this.declareMethod("Object", "getClass", function(self) {
-    return this.getClassName(self);
-  });
-
-  this.declareClassMethod("Object", "getSuperClass", function(Self) {
-    return util.isObjectClass(Self) ? null : Self.superClass;
-  });
-
-  this.declareClassMethod("Object", "getDefiningClass", function(Self, selector,
-      defType) {
-    util.assertTypes("Object::getDefiningClass", [
-      {value: selector, varName: "selector", type: "string"},
-      {value: defType, varName: "defType", type: "string"}
-    ]);
-
-    return this.getDefiningClass(Self, selector, defType);
-  });
-
-  this.declareClassMethod("Object", "hasProperty", function(Self, selector,
-      defType) {
-    util.assertTypes("Object::hasProperty", [
-      {value: selector, varName: "selector", type: "string"},
-      {value: defType, varName: "defType", type: "string"}
-    ]);
-
-    return !!this.getDefiningClass(Self, selector, defType);
-  });
 };
 
-OO.declareJSPrimitiveClasses = function() {
-  // create js primitive abstract class
-  this.declareJSPrimitiveClass();
-
-  // create classes for each js primitive
-  this.declareNumberClass();
-  this.declareBooleanClasses();
-  this.declareStringClass();
-  this.declareNullClass();
-};
-
-OO.declareJSPrimitiveClass = function() {
-  this.declareClass("JSPrimitive", "Object", [], [], true);
-
-  this.declareMethod("JSPrimitive", "initialize", function(self) {
-    throw new Error("cannot call initialize on a JS primitive class - use " +
-        "direct primitives or the newPrimitiveInstance class method instead");
-  });
-
-  this.declareClassMethod("JSPrimitive", "newPrimitiveInstance", function(Self)
-      {
-    throw new Error("cannot call newPrimitiveInstance on abstract JS " +
-        "primitive " + Self.name);
-  });
-};
-
-OO.declareNumberClass = function() {
-  this.declareClass("Number", "JSPrimitive");
-
-  this.declareClassMethod("Number", "newPrimitiveInstance",
-      function(Self, value) {
-    (util.isString(value)) && (value = parseFloat(value));
-    util.assertType(value, "number", "Number.newPrimitiveInstance", "value");
-    return value;
-  });
-
-  this.declareMethod("Number", "isNumber", function(self) {
-    return true;
-  });
-
-  this.declareMethod("Number", "+", function(self, number) {
-    util.assertType(number, "number", "Number::+", "number");
-    return self + number;
-  });
-
-  this.declareMethod("Number", "-", function(self, number) {
-    util.assertType(number, "number", "Number::-", "number");
-    return self - number;
-  });
-
-  this.declareMethod("Number", "*", function(self, number) {
-    util.assertType(number, "number", "Number::*", "number");
-    return self * number;
-  });
-
-  this.declareMethod("Number", "/", function(self, number) {
-    util.assertType(number, "number", "Number::/", "number");
-    return self / number;
-  });
-
-  this.declareMethod("Number", "%", function(self, number) {
-    util.assertType(number, "number", "Number::%", "number");
-    return self % number;
-  });
-
-  this.declareMethod("Number", "<", function(self, number) {
-    util.assertType(number, "number", "Number::<", "number");
-    return self < number;
-  });
-
-  this.declareMethod("Number", "<=", function(self, number) {
-    util.assertType(number, "number", "Number::<=", "number");
-    return self <= number;
-  });
-
-  this.declareMethod("Number", ">", function(self, number) {
-    util.assertType(number, "number", "Number::>", "number");
-    return self > number;
-  });
-
-  this.declareMethod("Number", ">=", function(self, number) {
-    util.assertType(number, "number", "Number::>=", "number");
-    return self >= number;
-  });
-};
-
-OO.declareBooleanClasses = function() {
-  // create boolean abstract class
-  this.declareBooleanClass();
-
-  // create classes for true and false
-  this.declareTrueClass();
-  this.declareFalseClass();
-}
-
-OO.declareBooleanClass = function() {
-  this.declareClass("Boolean", "JSPrimitive");
-
-  this.declareClassMethod("Boolean", "newPrimitiveInstance",
-      function(Self, value) {
-    if (arguments.length < 2) {
-      throw new Error("function Boolean.newPrimitiveInstance may not be " +
-          "called with zero arguments");
-    };
-    return !!value;
-  });
-};
-
-OO.declareTrueClass = function() {
-  this.declareClass("True", "Boolean");
-
-  this.declareClassMethod("True", "newPrimitiveInstance", function(Self) {
-    return true;
-  });
-};
-
-OO.declareFalseClass = function() {
-  this.declareClass("False", "Boolean");
-
-  this.declareClassMethod("False", "newPrimitiveInstance", function(Self) {
-    return false;
-  });
-};
-
-OO.declareStringClass = function() {
-  this.declareClass("String", "JSPrimitive");
-
-  this.declareClassMethod("String", "newPrimitiveInstance",
-      function(Self, value) {
-    if (arguments.length < 2) {
-      throw new Error("function String.newPrimitiveInstance may not be called" +
-          " with zero arguments");
-    };
-    return util.toString(value);
-  });
-};
-
-OO.declareNullClass = function() {
-  this.declareClass("Null", "JSPrimitive");
-
-  this.declareClassMethod("Null", "newPrimitiveInstance", function(Self, value) {
-    return null;
-  });
-};
-
-OO.declareBlockClass = function() {
-  this.declareClass("Block", "Object", ["block"]);
-
-  this.declareMethod("Block", "initialize", function(self, block) {
-    util.assertType(block, "function", "Block::initialize", "block");
-    this.setInstVar(self, "block", block);
-  });
-
-  this.declareMethod("Block", "call", function(self /* , arg1, arg2, ... */) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    return this.getInstVar(self, "block").apply(this, args);
-  });
-};
-
-OO.declareClass = function(name, superClassName, instVarNames, classVarNames,
+core.declareClass = function(name, superClassName, instVarNames, classVarNames,
     isJSPrimitiveWrapper) {
   // default arg values
   (instVarNames === undefined) && (instVarNames = []);
@@ -318,7 +100,7 @@ OO.declareClass = function(name, superClassName, instVarNames, classVarNames,
   };
 }
 
-OO.declareMethod = function(className, selector, implFn) {
+core.declareMethod = function(className, selector, implFn) {
   util.assertTypes("declareMethod", [
     {value: className, varName: "className", type: "className"},
     {value: selector, varName: "selector", type: "string"},
@@ -328,7 +110,7 @@ OO.declareMethod = function(className, selector, implFn) {
   this.classTable[className].instMethods[selector] = implFn;
 }
 
-OO.declareClassMethod = function(className, selector, implFn) {
+core.declareClassMethod = function(className, selector, implFn) {
   util.assertTypes("declareClassMethod", [
     {value: className, varName: "className", type: "className"},
     {value: selector, varName: "selector", type: "string"},
@@ -338,7 +120,7 @@ OO.declareClassMethod = function(className, selector, implFn) {
   this.classTable[className].classMethods[selector] = implFn;
 }
 
-OO.instantiate = function(className /* , arg1, arg2, ... */) {
+core.instantiate = function(className /* , arg1, arg2, ... */) {
   util.assertType(className, "className", "instantiate", "className");
 
   // if the class just wraps a JS primitive, handle specially
@@ -362,7 +144,7 @@ OO.instantiate = function(className /* , arg1, arg2, ... */) {
   return instance;
 }
 
-OO.getClassName = function(instance) {
+core.getClassName = function(instance) {
   util.assertType(instance, "instance", "getClassName", "instance");
 
   if (util.isJSPrimitive(instance)) {
@@ -382,7 +164,21 @@ OO.getClassName = function(instance) {
   };
 };
 
-OO.getDefiningClass = function(DerivedClass, selector, defType) {
+core.getClass = function(instanceOrClassName) {
+  if (!(util.isInstance(instanceOrClassName) ||
+      util.isNameOfExistingClass(instanceOrClassName))) {
+    util.assertTypeError("instance or className", "getClassName",
+        "instanceOrClassName");
+  };
+
+  var className = instanceOrClassName;
+  if (util.isInstance(className)) {
+    className = this.getClassName(instanceOrClassName);
+  }
+  return this.classTable[className];
+};
+
+core.getDefiningClass = function(DerivedClass, selector, defType) {
   util.assertTypes("getDefiningClass", [
     {value: DerivedClass, varName: "DerivedClass", type: "class"},
     {value: selector, varName: "selector", type: "string"},
@@ -400,7 +196,7 @@ OO.getDefiningClass = function(DerivedClass, selector, defType) {
   return DefiningClass;
 }
 
-OO._send = function(className, recv, selector /* , arg1, arg2, ... */) {
+core._send = function(className, recv, selector /* , arg1, arg2, ... */) {
   util.assertTypes("_send", [
     {value: className, varName: "className", type: "className"},
     {value: recv, varName: "recv", type: "instanceOrClass"},
@@ -421,7 +217,7 @@ OO._send = function(className, recv, selector /* , arg1, arg2, ... */) {
   return DefiningClass[defType][selector].apply(this, args);
 }
 
-OO.send = function(recv, selector /* , arg1, arg2, ... */) {
+core.send = function(recv, selector /* , arg1, arg2, ... */) {
   util.assertTypes("send", [
     {value: recv, varName: "recv", type: "instance"},
     {value: selector, varName: "selector", type: "string"}
@@ -432,7 +228,7 @@ OO.send = function(recv, selector /* , arg1, arg2, ... */) {
   return this._send.apply(this, args);
 }
 
-OO.sendToClass = function(RecvClass, selector /* , arg1, arg2, ... */) {
+core.sendToClass = function(RecvClass, selector /* , arg1, arg2, ... */) {
   var unprivilegedAccess = false;
   if (util.isString(RecvClass)) {
     RecvClass = this.classTable[RecvClass];
@@ -451,7 +247,7 @@ OO.sendToClass = function(RecvClass, selector /* , arg1, arg2, ... */) {
   return (util.isClass(retVal) && unprivilegedAccess) ? retVal.name : retVal;
 }
 
-OO.superSend = function(superClassName, recv, selector /* , arg1, arg2, ... */)
+core.superSend = function(superClassName, recv, selector /* , arg1, arg2, ... */)
     {
   util.assertTypes("superSend", [
     {value: superClassName, varName: "superClassName", type: "className"},
@@ -462,7 +258,7 @@ OO.superSend = function(superClassName, recv, selector /* , arg1, arg2, ... */)
   return this._send.apply(this, arguments);
 }
 
-OO.getInstVar = function(recv, instVarName) {
+core.getInstVar = function(recv, instVarName) {
   util.assertTypes("getInstVar", [
     {value: recv, varName: "recv", type: "instance"},
     {value: instVarName, varName: "instVarName", type: "string"}
@@ -476,7 +272,7 @@ OO.getInstVar = function(recv, instVarName) {
   return recv.__instanceVars__[instVarName];
 }
 
-OO.setInstVar = function(recv, instVarName, value) {
+core.setInstVar = function(recv, instVarName, value) {
   util.assertTypes("setInstVar", [
     {value: recv, varName: "recv", type: "instance"},
     {value: instVarName, varName: "instVarName", type: "string"}
@@ -491,7 +287,7 @@ OO.setInstVar = function(recv, instVarName, value) {
   return value;
 }
 
-OO.getClassVar = function(Recv, classVarName) {
+core.getClassVar = function(Recv, classVarName) {
   util.assertTypes("getClassVar", [
     {value: Recv, varName: "Recv", type: "class"},
     {value: classVarName, varName: "classVarName", type: "string"}
@@ -505,7 +301,7 @@ OO.getClassVar = function(Recv, classVarName) {
   return Recv.classVars[classVarName];
 }
 
-OO.setClassVar = function(Recv, classVarName, value) {
+core.setClassVar = function(Recv, classVarName, value) {
   util.assertTypes("setClassVar", [
     {value: Recv, varName: "Recv", type: "class"},
     {value: classVarName, varName: "classVarName", type: "string"}

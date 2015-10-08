@@ -1,9 +1,3 @@
-// Initialize the class table!
-
-OO.initializeCT();
-
-// Tests for Part II
-
 tests(O,
   {
     name: 'thenElse (1/2)',
