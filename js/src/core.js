@@ -4,22 +4,32 @@ var util = OO.util;
 
 var core = OO.core = {};
 
-core.reset = function() {
-  this.classTable = OO.classTable = {};
+_.extend(core, Backbone.Events, {
+  reset: function() {
+    this.classTable = OO.classTable = {};
 
-  this.ObjectClass = OO.ObjectClass = {
-    name: "Object",
-    superClass: null,
-    instVarNames: {},
-    instMethods: {},
-    classVarNames: {},
-    classVars: {},
-    classMethods: {},
-    isJSPrimitiveWrapper: false
-  };
+    this.ObjectClass = OO.ObjectClass = {
+      name: "Object",
+      superClass: null,
+      instVarNames: {},
+      instMethods: {},
+      classVarNames: {},
+      classVars: {},
+      classMethods: {},
+      isJSPrimitiveWrapper: false
+    };
 
-  this.classTable["Object"] = this.ObjectClass;
-};
+    this.classTable["Object"] = this.ObjectClass;
+
+    this.trigger("reset");
+  }
+});
+
+OO.on("reset", _.bind(core.reset, core));
+
+
+// Core class management library
+// -----------------------------
 
 core.declareClass = function(name, superClassName, instVarNames, classVarNames,
     isJSPrimitiveWrapper) {

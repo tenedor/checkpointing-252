@@ -11,6 +11,12 @@ classes.setupNativeClasses = function() {
   this.declareBlockClass();
 };
 
+core.on("reset", _.bind(classes.setupNativeClasses, classes));
+
+
+// Construct native classes
+// ------------------------
+
 classes.setupObjectClass = function() {
   core.declareMethod("Object", "initialize", function(self) {});
 
