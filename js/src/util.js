@@ -1,45 +1,47 @@
 (function() {
 
+var util = OO.util = {};
+
 // javascript types
-OO.isNumber = function(x) {return typeof x === "number";};
-OO.isBoolean = function(x) {return typeof x === "boolean";};
-OO.isString = function(x) {return typeof x === "string";};
-OO.isNull = function(x) {return x === null;};
-OO.isUndefined = function(x) {return x === undefined;};
-OO.isArray = function(x) {return Array.isArray(x);};
-OO.isFunction = function(x) {return typeof x === "function";};
-OO.isObject = function(x) {
+util.isNumber = function(x) {return typeof x === "number";};
+util.isBoolean = function(x) {return typeof x === "boolean";};
+util.isString = function(x) {return typeof x === "string";};
+util.isNull = function(x) {return x === null;};
+util.isUndefined = function(x) {return x === undefined;};
+util.isArray = function(x) {return Array.isArray(x);};
+util.isFunction = function(x) {return typeof x === "function";};
+util.isObject = function(x) {
   return typeof x === "object" && !this.isArray(x) && !this.isNull(x);
 };
 
 // OO types
-OO.isStrictInstance = function(x) {
+util.isStrictInstance = function(x) {
   return (this.isObject(x) && x.hasOwnProperty("__className__") &&
       this.isNameOfExistingClass(x.__className__));
 };
-OO.isJSPrimitive = function(x) {
+util.isJSPrimitive = function(x) {
   return (this.isNumber(x) || this.isBoolean(x) || this.isString(x) ||
       this.isNull(x));
 };
-OO.isInstance = function(x) {
+util.isInstance = function(x) {
   return (this.isStrictInstance(x) || this.isJSPrimitive(x));
 };
-OO.isClass = function(x) {
-  return this.isObjectWithSuper(x) && this.isOrDerivesFrom(x, this.ObjectClass);
+util.isClass = function(x) {
+  return this.isObjectWithSuper(x) && this.isOrDerivesFrom(x, OO.ObjectClass);
 };
-OO.isObjectClass = function(x) {
-  return x === this.ObjectClass;
+util.isObjectClass = function(x) {
+  return x === OO.ObjectClass;
 };
-OO.isJSPrimitiveWrapperClass = function(x) {
+util.isJSPrimitiveWrapperClass = function(x) {
   return this.isClass(x) && x.isJSPrimitiveWrapper;
 };
-OO.isNameOfExistingClass = function(className) {
-  return this.classTable.hasOwnProperty(className);
+util.isNameOfExistingClass = function(className) {
+  return OO.classTable.hasOwnProperty(className);
 };
-OO.isObjectWithSuper = function(x) {
+util.isObjectWithSuper = function(x) {
   return this.isObject(x) && x.hasOwnProperty('superClass');
 };
-OO.isDerivedFrom = function(Derived, Ancestor) {
+util.isDerivedFrom = function(Derived, Ancestor) {
   this.assertType(Derived, "objectWithSuper", "isDerivedFrom", "Derived");
 
   if (this.isObjectClass(Derived)) {
@@ -48,12 +50,12 @@ OO.isDerivedFrom = function(Derived, Ancestor) {
   var SuperClass = Derived.superClass;
   return (SuperClass === Ancestor || this.isDerivedFrom(SuperClass, Ancestor));
 };
-OO.isOrDerivesFrom = function(Derived, Ancestor) {
+util.isOrDerivesFrom = function(Derived, Ancestor) {
   return (Derived === Ancestor || this.isDerivedFrom(Derived, Ancestor));
 };
 
 // type checker
-OO.assertType = function(value, type, funcName, varName) {
+util.assertType = function(value, type, funcName, varName) {
   switch(type) {
     case "number":
       if (this.isNumber(value)) {return;}
@@ -97,7 +99,7 @@ OO.assertType = function(value, type, funcName, varName) {
       this.toString(funcName) + " must be of type " + this.toString(type));
 };
 
-OO.assertTypes = function(funcName, typeChecks) {
+util.assertTypes = function(funcName, typeChecks) {
   this.assertType(typeChecks, "array", "assertTypes", "typeChecks");
 
   for (var i = 0; i < typeChecks.length; i++) {
@@ -112,7 +114,7 @@ OO.assertTypes = function(funcName, typeChecks) {
 // javascript do (a) what I want, (b) anything internally consistent, (c) what
 // the Mozilla documentation says they will, or (of course) (d) the same thing
 // regardless of the browser you use.
-OO.toString = function(value) {
+util.toString = function(value) {
   if (this.isNumber(value) || this.isBoolean(value) || this.isString(value) ||
       this.isNull(value) || this.isUndefined(value) || this.isFunction(value)) {
     return "" + value;

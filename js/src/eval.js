@@ -1,5 +1,7 @@
 (function() {
 
+var util = OO.util;
+
 O.evalAST = function(ast) {
   var context = {
     environment: new Environment(),
@@ -57,11 +59,11 @@ var isReturnObject = function(x) {
 };
 
 var recEval = function(context, ast) {
-  if (!OO.isArray(ast)) {
-    if (OO.isJSPrimitive(ast) || OO.isStrictInstance(ast) || OO.isClass(ast)) {
+  if (!util.isArray(ast)) {
+    if (util.isJSPrimitive(ast) || util.isStrictInstance(ast) || util.isClass(ast)) {
       return ast;
     } else {
-      throw new Error("Illegal AST: " + OO.toString(ast));
+      throw new Error("Illegal AST: " + util.toString(ast));
     };
   };
   switch (ast[0]) {
