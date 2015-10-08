@@ -1,1 +1,3 @@
-var OO = {};
+if (typeof(OO) === "undefined") {
+  OO = {};
+};
