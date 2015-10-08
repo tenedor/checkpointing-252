@@ -2,6 +2,9 @@ if (typeof(OO) === "undefined") {
   OO = {};
 };
 
+// tell the grammar about OO
+O.OO = OO;
+
 OO.classTable = {};
 OO.ObjectClass = {};
 

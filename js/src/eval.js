@@ -3,7 +3,9 @@
 var util = OO.util;
 var core = OO.core;
 
-O.evalAST = function(ast) {
+var eval = OO.eval = {};
+
+eval.evalAST = function(ast) {
   var context = {
     environment: new Environment(),
     nameOfHostClass: null
@@ -12,7 +14,7 @@ O.evalAST = function(ast) {
   return recEval(context, ast);
 };
 
-function Environment(parent) {
+var Environment = eval.Environment = function(parent) {
   this.parent = parent;
   this.vars = {};
 };
