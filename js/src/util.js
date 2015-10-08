@@ -108,6 +108,11 @@ util.assertTypes = function(funcName, typeChecks) {
   };
 };
 
+util.assertTypeError = function(type, funcName, varName) {
+  throw new Error("argument " + this.toString(varName) + " to function " +
+      this.toString(funcName) + " must be of type " + this.toString(type));
+};
+
 // our own toString function...
 //
 // because not one of the three different kinds of toString functions built into
