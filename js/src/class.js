@@ -360,6 +360,26 @@ OO.instantiate = function(className /* , arg1, arg2, ... */) {
   return instance;
 }
 
+OO.getClassName = function(instance) {
+  this.assertType(instance, "instance", "getClassName", "instance");
+
+  if (this.isJSPrimitive(instance)) {
+    if (this.isNumber(instance)) {
+      return "Number";
+    } else if (this.isBoolean(instance)) {
+      return instance ? "True" : "False";
+    } else if (this.isString(instance)) {
+      return "String";
+    } else if (this.isNull(instance)) {
+      return "Null";
+    } else {
+      throw new Error("unknown JS primitive type passed to getClassName");
+    };
+  } else {
+    return instance.__className__;
+  };
+};
+
 OO.getDefiningClass = function(DerivedClass, selector, defType) {
   this.assertTypes("getDefiningClass", [
     {value: DerivedClass, varName: "DerivedClass", type: "class"},
