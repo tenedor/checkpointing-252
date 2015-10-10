@@ -1,0 +1,146 @@
+O {
+  Program
+    = ProgramPart* Expr?
+
+  ProgramPart
+    = ClassDecl
+    | MethodDecl
+    | Stmt
+
+  ClassDecl
+    = class className (extends className)? InstVarDecls ';'
+
+  InstVarDecls
+    = with ident (',' ident)*  -- some
+    |                          -- none
+
+  MethodDecl
+    = def className '.' ident Formals MethodBody  -- nary1
+    | def className (ident ident)+ MethodBody     -- nary2
+    | def className binSelector ident MethodBody  -- binary
+
+  MethodBody
+    = '=' Expr ';'         -- expr
+    | '{' Stmt* Expr? '}'  -- stmt
+
+  Stmt
+    = var VarDeclPart (',' VarDeclPart)* ';'  -- varDecls
+    | return Expr ';'                         -- return
+    | this '.' ident '=' Expr ';'             -- instVarAssign
+    | ident '=' Expr ';'                      -- varAssign
+    | Expr ';'                                -- expr
+
+  VarDeclPart
+    = ident '=' Expr  -- init
+    | ident           -- noInit
+
+  Expr  -- expression
+    = WSendExpr
+
+  WSendExpr
+    = super  (ident EqExpr)+  -- super
+    | EqExpr (ident EqExpr)+  -- send
+    | EqExpr
+
+  EqExpr
+    = RelExpr ('===' | '==' | '!==' | '!=') RelExpr  -- eq
+    | RelExpr
+
+  OrExpr
+    = OrExpr or AndExpr  -- or
+    | AndExpr
+
+  AndExpr
+    = AndExpr and RelExpr  -- and
+    | RelExpr
+
+  RelExpr
+    = AddExpr ('<=' | '<' | '>=' | '>') AddExpr  -- rel
+    | AddExpr
+
+  AddExpr
+    = AddExpr ('+' | '-') MulExpr  -- add
+    | MulExpr
+
+  MulExpr
+    = MulExpr ('*' | '/' | '%') DotExpr  -- mul
+    | DotExpr
+
+  DotExpr
+    = super   '.' ident Actuals  -- super
+    | DotExpr '.' ident Actuals  -- send
+    | this    '.' ident  ~'('    -- instVarAccess
+    | UnExpr
+
+  UnExpr
+    = '+' PriExpr  -- pos
+    | '-' PriExpr  -- neg
+    | PriExpr
+
+  PriExpr
+    = '(' Expr ')'                  -- paren
+    | '{' BFormals Stmt* Expr? '}'  -- block
+    | new className Actuals         -- new
+    | string                        -- str
+    | ident                         -- ident
+    | number                        -- number
+    | this                          -- this
+    | trueK                         -- true
+    | falseK                        -- false
+    | nullK                         -- null
+
+  Actuals
+    = '(' Expr (',' Expr)* ')'  -- some
+    | '(' ')'                   -- none
+
+  Formals
+    = '(' ident (',' ident)* ')'  -- some
+    | '(' ')'                     -- none
+
+  BFormals
+    = ident (',' ident)* '|'  -- some
+    |                         -- none
+
+  ident  -- an identifier
+    = ~keyword lower alnum*
+
+  className  -- a class name
+    = upper alnum*
+
+  string  -- a string literal
+    = '"' (~'"' ~'\n' _)* '"'
+
+  number  -- a number literal
+    = digit* "." digit+  -- fract
+    | digit+             -- whole
+
+  binSelector  -- a binary selector
+    = '===' | '==' | '!==' | '!=' | '<=' | '<' | '>=' | '>'
+    | '+'   | '-'  | '*'   | '/'  | '%'
+
+  and        = 'and' ~alnum
+  class      = 'class' ~alnum
+  def        = 'def' ~alnum
+  extends    = 'extends' ~alnum
+  falseK     = 'false' ~alnum
+  new        = 'new' ~alnum
+  nullK      = 'null' ~alnum
+  or         = 'or' ~alnum
+  return     = 'return' ~alnum
+  super      = 'super' ~alnum
+  this       = 'this' ~alnum
+  trueK      = 'true' ~alnum
+  var        = 'var' ~alnum
+  with       = 'with' ~alnum
+
+  space += comment
+
+  comment
+    = '/*' (~'*/' _)* '*/'          -- multiLine
+    | '//' (~'\n' _)* ('\n' | end)  -- singleLine
+
+  keyword = class | def  | extends | falseK | new  | nullK  | return
+          | super | this | trueK   | var    | with
+
+  tokens = (keyword | ident | comment | _)*
+}
