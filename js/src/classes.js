@@ -31,7 +31,11 @@ classes.setupObjectClass = function() {
   core.declareMethod("Object", "isNumber", function(self) {
     return false;
   });
-
+  
+  core.declareMethod("Object", "isTruthy", function(self) {
+    return true;
+  });
+  
   core.declareMethod("Object", "hasProperty", function(self, selector, defType) {
     util.assertTypes("Object::hasProperty", [
       {value: selector, varName: "selector", type: "string"},
@@ -44,6 +48,17 @@ classes.setupObjectClass = function() {
 
   core.declareMethod("Object", "getClass", function(self) {
     return core.getClassName(self);
+  });
+  
+  core.declareMethod("Object", "ifThenElse", function(self, ifBlock, elseBlock) {
+	util.assertIsInstanceOf(ifBlock, Block);
+	util.assertIsInstanceOf(elseBlock, Block);
+	
+    if (self.isTruthy()) {
+	  core.send(ifBlock, "call");
+	} else {
+	  core.send(elseBlock, "call");
+	}
   });
 
   core.declareClassMethod("Object", "getSuperClass", function(Self) {
@@ -111,6 +126,10 @@ classes.declareNumberClass = function() {
     return true;
   });
 
+  core.declareMethod("Number", "isTruthy", function(self) {
+    return self !== 0;
+  });
+  
   core.declareMethod("Number", "+", function(self, number) {
     util.assertType(number, "number", "Number::+", "number");
     return self + number;
@@ -177,6 +196,10 @@ classes.declareBooleanClass = function() {
     };
     return !!value;
   });
+  
+  core.declareMethod("Boolean", "isTruthy", function(self) {
+    return self;
+  });
 };
 
 classes.declareTrueClass = function() {
@@ -206,6 +229,10 @@ classes.declareStringClass = function() {
     };
     return util.toString(value);
   });
+  
+  core.declareMethod("String", "isTruthy", function(self) {
+    return self !== "";
+  });
 };
 
 classes.declareNullClass = function() {
@@ -213,6 +240,10 @@ classes.declareNullClass = function() {
 
   core.declareClassMethod("Null", "newPrimitiveInstance", function(Self, value) {
     return null;
+  });
+  
+  core.declareMethod("Null", "isTruthy", function(self) {
+    return false;
   });
 };
 

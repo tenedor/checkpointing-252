@@ -99,6 +99,8 @@ util.assertType = function(value, type, funcName, varName) {
       this.toString(funcName) + " must be of type " + this.toString(type));
 };
 
+
+
 util.assertTypes = function(funcName, typeChecks) {
   this.assertType(typeChecks, "array", "assertTypes", "typeChecks");
 
@@ -134,6 +136,12 @@ util.toString = function(value) {
   };
   // it was that hard javascript. and that's four lines EXTRA from all you
   // needed to do.
+};
+
+util.assertIsInstanceOf = function(value, checkAgainst) {
+	if(value.getClassName() !== checkAgainst.name) {
+		  throw new Error("not an instance of");
+	}
 };
 
 })();
