@@ -51,8 +51,6 @@ classes.setupObjectClass = function() {
   });
   
   core.declareMethod("Object", "ifThenElse", function(self, ifBlock, elseBlock) {
-	//util.assertIsInstanceOf(ifBlock, Object);
-	//util.assertIsInstanceOf(elseBlock, Object);
     util.assertType(ifBlock, "object", "ifThenElse", "ifBlock");
     util.assertType(elseBlock, "object", "ifThenElse", "elseBlock");
 	

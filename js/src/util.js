@@ -138,10 +138,4 @@ util.toString = function(value) {
   // needed to do.
 };
 
-util.assertIsInstanceOf = function(value, checkAgainst) {
-	if(value.getClassName() !== checkAgainst.name) {
-		  throw new Error("not an instance of");
-	}
-};
-
 })();
