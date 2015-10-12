@@ -1,0 +1,115 @@
+// this is written in some mangled mix of javascript and python
+// (I guess that makes it kind of like coffeescript, in theory)
+//
+// note that anything added to an object's prototype is simply an instance
+// method or variable. anything added to an object is a class method or var.
+
+
+/* AST representation */
+
+ASTNode = function(args):
+  this.args = {}
+  for arg, i in args:
+    argName = this.argMap[i] // use the arg name corresponding to this index
+    if !isASTArray(arg):
+      this.args[argName] = arg
+    else:
+      nodeType = arg.pop()
+      this.args[argName] = ASTNode.Types[nodeType](arg)
+
+ASTNode.prototype.eval(context, evaledArgs):
+  for arg, argName in this.args:
+    if !evaledArgs[argName]:
+      nextFrame = {
+        node: arg,
+        context: context,
+        resultName: argName
+      }
+      return {result: "frame", frame: nextFrame}
+
+  returnValue = this.evaluate(context, evaledArgs);
+  return {result: "return", returnValue: returnValue}
+
+// map from ASTNode name to ASTNode class, one for each node type
+ASTNode.Types = {}
+
+
+/* Environment representation */
+
+Environment = function(parent):
+  this.parent = parent
+  this.vars = {}
+
+Environment.prototype = {
+  decl: function(name, val):
+    if !this.vars[name]:
+      this.vars[name] = {}
+    this.set(name, val)
+
+  set: function(name, val):
+    if !this.vars[name]:
+      return this.parent.set(name, val)
+    evalIndex = this.getEvalIndex()
+    storedValue = this.storeValue(val, evalIndex)
+    this.vars[name].push({evalIndex: evalIndex, value: storedValue})
+
+  get: function(name):
+    if this.vars[name] && this.vars.name.hasValueAtIndex(currentEvalIndex):
+      value = this.vars.name.getValueAtIndex(currentEvalIndex)
+      if value.hasOwnProperty(heapId):
+        value = heap.get(value.heapId)
+      return value
+    else:
+      return this.parent.get(name)
+
+  storeValue: function(val, evalIndex):
+    if (isPrimitive(val)):
+      return val
+    // We need a layer of indirection for non-primitive values. One solution is
+    // to assign every object a unique id and stick it in a heap. but then we
+    // blow out javascript's garbage collection, and we need to either build our
+    // own or accept the performance consequences. Is there a better solution??
+    else:
+      heapId = heap.add(val, evalIndex)
+      return {heapId: heapId}
+}
+
+Environment.getEvalIndex = function():
+  return currentEvalIndex++
+
+
+/* Evaluation */
+
+environment = new Environment()
+
+evalStack = []
+evalStack.push({
+  node: programNode,
+  context: environment,
+  resultName: "result",
+  evaledArgs: {},
+  result: undefined
+})
+
+while (frame = evalStack.last):
+  // if the current frame has produced a result, save it to the containing frame
+  // and pop the stack
+  if frame.result != undefined:
+    evalStack.pop()
+    if !evalStack.last:
+      return frame.result
+    evalStack.last.evaledArgs[frame.resultName] = frame.result
+
+  // otherwise, make an evaluation step on the current frame. an evaluation step
+  // can either produce a return value or a new frame to eval
+  else:
+    eval = frame.node.eval(frame.context, frame.evaledArgs)
+    match eval.result:
+      "return": frame.result = eval.returnValue
+      "frame": evalStack.push({
+                node: eval.frame.node,
+                context: eval.frame.context,
+                resultName: eval.frame.resultName,
+                evaledArgs: {},
+                result: undefined
+              })
