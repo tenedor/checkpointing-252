@@ -177,7 +177,7 @@ core.getClassName = function(instance) {
 core.getClass = function(instanceOrClassName) {
   if (!(util.isInstance(instanceOrClassName) ||
       util.isNameOfExistingClass(instanceOrClassName))) {
-    util.assertTypeError("instance or className", "getClassName",
+    util.assertTypeError("instance or className", "getClass",
         "instanceOrClassName");
   };
 
