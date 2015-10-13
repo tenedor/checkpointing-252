@@ -60,6 +60,24 @@ classes.setupObjectClass = function() {
 	  core.send(elseBlock, "call");
 	}
   });
+ 
+  core.declareMethod("Object", "loop", function(self, loopBlock) {
+    util.assertType(loopBlock, "object", "loop", "loopBlock");
+    util.assertType(self, "number", "loop", "self");
+                    
+    for (i = 0; i < self; i++) {
+      core.send(loopBlock, "call");
+    }
+  });
+ 
+//this doesn't work yet.
+ /* core.declareMethod("Object", "while", function(self, whileBlock) {
+    util.assertType(whileBlock, "object", "while", "whileBlock");
+                    
+    while (core.send(self, "isTruthy")) {
+      core.send(whileBlock, "call");
+    }
+  });*/
 
   core.declareClassMethod("Object", "getSuperClass", function(Self) {
     return util.isObjectClass(Self) ? null : Self.superClass;
