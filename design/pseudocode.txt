@@ -10,7 +10,7 @@
 ASTNode = function(args):
   this.args = {}
   for arg, i in args:
-    argName = this.argMap[i] // use the arg name corresponding to this index
+    argName = this.argMap[i] || i // use the arg name corresponding to this index
     if !isASTArray(arg):
       this.args[argName] = arg
     else:
@@ -36,80 +36,133 @@ ASTNode.Types = {}
 
 /* Environment representation */
 
-Environment = function(parent):
+Variable = function():
+  this.history = []
+
+Variable.prototype = {
+  push: function(value, evalIndex):
+    if this.history.last.evalIndex > lastCheckpointIndex:
+      this.history.pop()
+    this.history.push({value: value, evalIndex: evalIndex})
+
+  getValueAtIndex: function(evalIndex):
+    isLive = function(snapshot):
+      return snapshot.evalIndex <= evalIndex
+    currentValue = findLast(this.history, isLive)
+    return currentValue ? currentValue.value : undefined
+}
+
+Pointer = function(heap, heapId):
+  this.heap = heap
+  this.heapId = heapId
+
+Pointer.prototype = {
+  setValue: function(val):
+    evalIndex = activeEvaluation.nextEvalIndex()
+    return this.heap.set(this.heapId, val, evalIndex)
+
+  getValue: function():
+    return this.heap.get(this.heapId, currentEvalIndex)
+}
+
+Heap = function():
+  this.vars = {}
+  this.nextId = 0
+
+Heap.prototype = {
+  add: function(val, evalIndex):
+    heapId = this.nextId++
+    this.vars[heapId] = Variable()
+    this.set(heapId, val, evalIndex)
+    return Pointer(this, heapId)
+
+  set: function(heapId, val, evalIndex):
+    this.vars[heapId].push(val, evalIndex)
+
+  get: function(heapId, evalIndex):
+    return this.vars[heapId].getValueAtIndex(evalIndex)
+}
+
+Stack = function(parent, heap):
   this.parent = parent
+  this.heap = heap
   this.vars = {}
 
-Environment.prototype = {
-  decl: function(name, val):
+Stack.prototype = {
+  declare: function(name, val):
     if !this.vars[name]:
-      this.vars[name] = {}
-    this.set(name, val)
+      this.vars[name] = Variable()
+    if val != undefined:
+      this.set(name, val)
 
   set: function(name, val):
     if !this.vars[name]:
       return this.parent.set(name, val)
-    evalIndex = this.getEvalIndex()
-    storedValue = this.storeValue(val, evalIndex)
-    this.vars[name].push({evalIndex: evalIndex, value: storedValue})
+    evalIndex = activeEvaluation.nextEvalIndex()
+    if !isPrimitive(val):
+      val = this.heap.add(val, evalIndex)
+    this.vars[name].push(val, evalIndex)
 
   get: function(name):
-    if this.vars[name] && this.vars.name.hasValueAtIndex(currentEvalIndex):
-      value = this.vars.name.getValueAtIndex(currentEvalIndex)
-      if value.hasOwnProperty(heapId):
-        value = heap.get(value.heapId)
-      return value
+    if this.vars[name]:
+      value = this.vars[name].getValueAtIndex(currentEvalIndex)
+      if value != undefined:
+        return value
     else:
       return this.parent.get(name)
-
-  storeValue: function(val, evalIndex):
-    if (isPrimitive(val)):
-      return val
-    // We need a layer of indirection for non-primitive values. One solution is
-    // to assign every object a unique id and stick it in a heap. but then we
-    // blow out javascript's garbage collection, and we need to either build our
-    // own or accept the performance consequences. Is there a better solution??
-    else:
-      heapId = heap.add(val, evalIndex)
-      return {heapId: heapId}
 }
-
-Environment.getEvalIndex = function():
-  return currentEvalIndex++
 
 
 /* Evaluation */
 
-environment = new Environment()
+Evaluation = function(programNode):
+  this.heap = Heap()
+  this.stack = Stack(undefined, this.heap)
+  this.currentEvalIndex = 0
+  this.evalStack = []
+  this.evalStack.push({
+    node: programNode,
+    context: this.stack,
+    resultName: "result",
+    evaledArgs: {},
+    result: undefined
+  })
+  this.result = undefined
 
-evalStack = []
-evalStack.push({
-  node: programNode,
-  context: environment,
-  resultName: "result",
-  evaledArgs: {},
-  result: undefined
-})
+Evaluation.prototype = {
+  nextEvalIndex: function():
+    return this.currentEvalIndex++
 
-while (frame = evalStack.last):
-  // if the current frame has produced a result, save it to the containing frame
-  // and pop the stack
-  if frame.result != undefined:
-    evalStack.pop()
-    if !evalStack.last:
-      return frame.result
-    evalStack.last.evaledArgs[frame.resultName] = frame.result
+  evaluate: function(evalIndex):
+    if evalIndex:
+      this.setToCheckpoint(evalIndex)
 
-  // otherwise, make an evaluation step on the current frame. an evaluation step
-  // can either produce a return value or a new frame to eval
-  else:
-    eval = frame.node.eval(frame.context, frame.evaledArgs)
-    match eval.result:
-      "return": frame.result = eval.returnValue
-      "frame": evalStack.push({
-                node: eval.frame.node,
-                context: eval.frame.context,
-                resultName: eval.frame.resultName,
-                evaledArgs: {},
-                result: undefined
-              })
+    while (frame = evalStack.last):
+      // if the current frame has produced a result, save it to the containing
+      // frame and pop the stack
+      if frame.result != undefined:
+        evalStack.pop()
+        if evalStack.last:
+          evalStack.last.evaledArgs[frame.resultName] = frame.result
+        else:
+          this.result = frame.result
+          return this.result
+
+      // otherwise, make an evaluation step on the current frame. an evaluation
+      // step can either produce a return value or a new frame to eval
+      else:
+        eval = frame.node.eval(frame.context, frame.evaledArgs)
+        match eval.result:
+          "return": frame.result = eval.returnValue
+          "frame": evalStack.push({
+                    node: eval.frame.node,
+                    context: eval.frame.context,
+                    resultName: eval.frame.resultName,
+                    evaledArgs: {},
+                    result: undefined
+                  })
+
+  setToCheckpoint: function(evalIndex):
+    this.currentEvalIndex = evalIndex
+    // and then, reconstruct the appropriate eval stack
+}
