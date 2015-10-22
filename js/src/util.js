@@ -3,6 +3,10 @@
 var util = OO.util = {};
 
 
+// Add this method to a function object to make it easy to inherit from
+util.extendSelf = Backbone.Model.extend;
+
+
 // Type checkers
 util.isNumber = function(x) {return typeof x === "number";};
 util.isBoolean = function(x) {return typeof x === "boolean";};
