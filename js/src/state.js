@@ -66,8 +66,8 @@ _.extend(VersionedValue.prototype, {
     };
   },
 
-  // return the snapshot active at timepoint time; return undefined if no
-  // snapshot existed
+  // return the snapshot active at timepoint time;
+  // return undefined if no snapshot existed
   snapshotAtTime: function(time) {
     var l = this._history.length;
     var firstIndexAfterTarget;
@@ -83,7 +83,8 @@ _.extend(VersionedValue.prototype, {
     };
   },
 
-  // return value at timepoint time; return undefined if no value existed
+  // return value at timepoint time;
+  // return undefined if no value existed
   valueAtTime: function(time) {
     return this.snapshotAtTime(time)[1];
   }
