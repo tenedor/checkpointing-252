@@ -242,14 +242,57 @@ _.extend(ClassTable.prototype, {
   },
 
   methodOfInstanceWithName: function(instance, messageName) {
-    // confirm that method exists
-    var mt = this._methodTables[instance.__className__];
-    var methodDecl = mt && mt[messageName] &&
-        mt[messageName].valueAtTime(this._clock.time);
-    util.assert(methodDecl,
-        instance.__className__ + " object has no method named " + messageName);
+    var className = instance.__className__;
+    var definingClass = this.classDefiningMethodOfClassWithName(className,
+        messageName);
+    var mt, methodDecl;
+
+    // confirm that a defining class exists
+    util.assert(definingClass, className + " object has no method named " +
+        messageName);
+
+    // get method declaration
+    mt = this._methodTables[definingClass];
+    methodDecl = mt[messageName].valueAtTime(this._clock.time);
 
     return {astID: methodDecl[0], argNames: methodDecl.slice(1)}
+  },
+
+  // return the first class that satisfies pred, searching first on the given
+  // class and then on each successive ancestor;
+  // return undefined if no satisfactory class is found
+  classOrFirstAncestorSuchThat: function(className, pred) {
+    var class = this._classes[className];
+    var parentClass;
+
+    // confirm that class exists
+    util.assert(class && class.valueAtTime(this._clock.time),
+        "no class exists with name " + className);
+
+    // return className if pred was satisfied, else check parent class
+    if (pred(className)) {
+      return className;
+    } else {
+      parentClass = class[0];
+      return (parentClass ?
+        this.classOrFirstAncestorSuchThat(parentClass, pred) :
+        undefined);
+    };
+  },
+
+  // return the first class that defines a method for a given methodName,
+  // searching first on the given class and then on its ancestors;
+  // return undefined if no such class is found
+  classDefiningMethodOfClassWithName: function(className, messageName) {
+    var that = this;
+
+    // return true if messageName is defined for className
+    var pred = function(className) {
+      var mt = that._methodTables[className];
+      return mt[messageName] && mt[messageName].valueAtTime(that._clock.time);
+    };
+
+    return this.classOrFirstAncestorySuchThat(className, pred);
   }
 });
 
