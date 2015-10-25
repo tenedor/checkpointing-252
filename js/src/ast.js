@@ -130,10 +130,10 @@ var If = ast.If = ast.Nodes["if"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO determine truthiness of evaledArgs[0] and figure out stack spawning
+    // TODO determine truthiness of evaledArgs[0]
     var isTruthy = throw Error("TODO - implement me");
     var block = isTruthy ? this.children[1] : this.children[2];
-    return ["eval", block, s.stack.spawn()];
+    return ["eval", block, s.stack.stackWithNewFrame()];
   }
 });
 
@@ -162,10 +162,10 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO determine truthiness of evaledArgs[0] and figure out stack spawning
+    // TODO determine truthiness of evaledArgs[0]
     var isTruthy = throw Error("TODO - implement me");
     if (isTruthy) {
-      return ["eval", this.children[1], s.stack.spawn()];
+      return ["eval", this.children[1], s.stack.stackWithNewFrame()];
     } else {
       return ["done", undefined];
     };
@@ -248,7 +248,10 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO add variables to local stack frame
+    var i;
+    for (i = 0; i + 1 < evaledArgs.length; i+=2) {
+      s.stack.declareVar(evaledArgs[i], evaledArgs[i + 1]);
+    };
     return ["done", undefined];
   }
 });
@@ -261,7 +264,7 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
   type: "setVar",
 
   evalSelf: function(s, evaledArgs) {
-    // TODO update variable on the stack
+    s.stack.setVarToValue(evaledArgs[0], evaledArgs[1]);
     return ["done", undefined];
   }
 });
@@ -301,8 +304,7 @@ var GetVar = ast.GetVar = ast.Nodes["getVar"] = Expr.extend({
   type: "getVar",
 
   evalSelf: function(s, evaledArgs) {
-    // TODO get variable from the stack
-    var addr;
+    var addr = s.stack.valueOfVar(evaledArgs[0]);
     return ["done", addr];
   }
 });
@@ -343,8 +345,8 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
       return this.__super__.updateArgs.apply(this, arguments);
     } else {
       // TODO make all of this rigorous
-      var instance = s.classTable.instantiate("null");
-      var addr = s.heap.add(instance);
+      var instance = s.classTable.newInstance("null");
+      var addr = s.heap.storeValue(instance);
       return ["done", addr];
     };
   },
@@ -354,9 +356,10 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     var receiver = evaledArgs[0];
     var messageName = evaledArgs[1];
     var args = evaledArgs.slice(2);
-    var method = s.classTable[receiver.class][messageName];
-    var newStack = s.stack.spawn();
+    var method = s.classTable.methodOfInstanceWithName(receiver, messageName);
+    var newStack = s.stack.stackWithNewFrame();
     newStack.declare("self", receiver);
+    // TODO - declare "super" varName?
     _.each(method.argNames, function(name, i) {
       newStack.declare(name, args[i]);
     });
@@ -395,8 +398,8 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
     // TODO make all of this rigorous
     var className = evaledArgs[0];
     var args = evaledArgs.slice(1);
-    var instance = s.classTable.instantiate(className);
-    var addr = s.heap.add(instance);
+    var instance = s.classTable.newInstance(className);
+    var addr = s.heap.storeValue(instance);
 
     // this one will be all sorts of fun - see the note above Send
     var send = this.constructAst(["send", ...]);
@@ -413,8 +416,7 @@ var This = ast.This = ast.Nodes["this"] = Expr.extend({
   type: "this"
 
   evalSelf: function(s, evaledArgs) {
-    // TODO get "self" variable from the stack, just like in GetVar
-    var addr;
+    var addr = s.stack.valueOfVar("self");
     return ["done", addr];
   }
 });
