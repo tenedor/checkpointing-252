@@ -275,8 +275,8 @@ _.extend(ClassTable.prototype, {
     } else {
       parentClass = class[0];
       return (parentClass ?
-        this.classOrFirstAncestorSuchThat(parentClass, pred) :
-        undefined);
+          this.classOrFirstAncestorSuchThat(parentClass, pred) :
+          undefined);
     };
   },
 
