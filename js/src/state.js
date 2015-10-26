@@ -193,12 +193,12 @@ _.extend(ClassTable.prototype, {
     superClassName || (superClassName = "Object");
     instVarNames || (instVarNames = []);
 
-    var class = this._classes[className];
+    var existingClassDef = this._classes[className];
     var superClass = this._classes[superClassName];
     var classDef, versioned;
 
     // forbid class redefinition and require superclass existence
-    util.assert(!(class && class.valueAtTime(this._clock.time)),
+    util.assert(!(existingClassDef && existingClassDef.valueAtTime(this._clock.time)),
         "class " + className + "already exists!");
     util.assert(superClass && superClass.valueAtTime(this._clock.time),
         "no class exists with name " + superClassName);
@@ -213,11 +213,11 @@ _.extend(ClassTable.prototype, {
 
   declareMethod: function(className, methodName, argNames, astID) {
     argNames || (argNames = []);
-    var class = this._classes[className];
+    var existingClassDef = this._classes[className];
     var methodDef, mt;
 
     // require class existence
-    util.assert(class && class.valueAtTime(this._clock.time),
+    util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
         "no class exists with name " + className);
     util.assert(util.isArray(argNames), "argNames must be an array");
 
@@ -233,8 +233,8 @@ _.extend(ClassTable.prototype, {
 
   newInstance: function(className) {
     // require class existence
-    var class = this._classes[className];
-    util.assert(class && class.valueAtTime(this._clock.time),
+    var existingClassDef = this._classes[className];
+    util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
         "no class exists with name " + className);
 
     return {__className__: className};
