@@ -19,6 +19,7 @@ var Ast = ast.Ast = function(parsedAst) {
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
   this.__super__ = this.constructor.__super__;
+  // TODO assign astID uniquely
   this.constructChildren(parsedAst.slice(1));
 };
 
@@ -198,7 +199,10 @@ var ClassDecl = ast.ClassDecl = ast.Nodes["classDecl"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO add classDef to class table
+    var className = evaledArgs[0];
+    var superClassName = evaledArgs[1];
+    var instVarNAmes = evaledArgs[2];
+    s.classTable.declareClass(className, superClassName, instVarNames);
     return ["done", undefined];
   }
 });
@@ -229,7 +233,11 @@ var MethodDecl = ast.MethodDecl = ast.Nodes["methodDecl"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO add methodDef to class table
+    var className = evaledArgs[0];
+    var methodName = evaledArgs[1];
+    var argNames = evaledArgs.slice(2);
+    var seq = this.children[this.children.length - 1];
+    s.classTable.declareMethod(className, methodName, argNames, seq.astID);
     return ["done", undefined];
   }
 });
@@ -279,6 +287,7 @@ var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
 
   evalSelf: function(s, evaledArgs) {
     // TODO update variable in the instance's variable table
+    
     return ["done", undefined];
   }
 });
