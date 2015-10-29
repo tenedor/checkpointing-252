@@ -115,7 +115,7 @@ var If = ast.If = ast.Nodes["if"] = Stmt.extend({
   type: "if",
 
   updateArgs: function(s, evaledArgs, newEvaledArg) {
-    if (evaledArgs.length < 1) {
+    if (evaledArgs.length < 2) {
       return this.__super__.updateArgs.apply(this, arguments);
     } else {
       return ["done", undefined];
@@ -125,14 +125,17 @@ var If = ast.If = ast.Nodes["if"] = Stmt.extend({
   eval: function(s, evaledArgs) {
     if (evaledArgs.length < 1) {
       return evalNextChild(s, evaledArgs);
+    } else if (evaledArgs.length < 2) {
+      // detect truthiness
+      return ["send", evaledArgs[0], "isTruthy", [], s.stack];
     } else {
       return evalSelf(s, evaledArgs);
     };
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO determine truthiness of evaledArgs[0]
-    var isTruthy = throw Error("TODO - implement me");
+    // TODO how do we find out whether a literal is truthy
+    var isTruthy = s.heap.valueAtAddress(evaledArgs[1]).literal;
     var block = isTruthy ? this.children[1] : this.children[2];
     return ["eval", block, s.stack.stackWithNewFrame()];
   }
@@ -146,7 +149,7 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
   type: "while",
 
   updateArgs: function(s, evaledArgs, newEvaledArg) {
-    if (evaledArgs.length < 1) {
+    if (evaledArgs.length < 2) {
       return this.__super__.updateArgs.apply(this, arguments);
     } else {
       evaledArgs.splice(0);
@@ -157,14 +160,17 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
   eval: function(s, evaledArgs) {
     if (evaledArgs.length < 1) {
       return evalNextChild(s, evaledArgs);
+    } else if (evaledArgs.length < 2) {
+      // detect truthiness
+      return ["send", evaledArgs[0], "isTruthy", [], s.stack];
     } else {
       return evalSelf(s, evaledArgs);
     };
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO determine truthiness of evaledArgs[0]
-    var isTruthy = throw Error("TODO - implement me");
+    // TODO how do we find out whether a literal is truthy
+    var isTruthy = s.heap.valueAtAddress(evaledArgs[1]).literal;
     if (isTruthy) {
       return ["eval", this.children[1], s.stack.stackWithNewFrame()];
     } else {
@@ -410,11 +416,8 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
     var instance = s.classTable.newInstance(className);
     var addr = s.heap.storeValue(instance);
 
-    // this one will be all sorts of fun - see the note above Send
-    var send = this.constructAst(["send", ...]);
-
     evaledArgs.push(addr); // this is hacky - can we do better?
-    return ["eval", send, s.stack];
+    return ["send", addr, "instantiate", args, s.stack];
   }
 });
 

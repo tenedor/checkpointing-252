@@ -80,6 +80,10 @@ _.extend(Eval.prototype, {
           instruction = this.evalStack.eval();
           break;
 
+        case "send":
+          // TODO
+          break;
+
         case "done":
           addr = instruction[1];
 
