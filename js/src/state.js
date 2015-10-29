@@ -156,7 +156,7 @@ _.extend(Stack.prototype, {
 
   // set value in the nearest scope that presently contains a declaration;
   // error if no declaration exists
-  setVarToValue: function(varName, value) {
+  setVarToValue: function(varName, value) { // TODO "setVarToAddress"
     var variable = this._vars[varName];
     var localValue = variable && variable.valueAtTime(this._clock.time);
 
@@ -172,6 +172,36 @@ _.extend(Stack.prototype, {
   // returns a newly-spawned child frame
   stackWithNewFrame: function() {
     return new Stack(this._clock, this);
+  }
+});
+
+
+// Instance
+//   @clock clock
+//   @string className
+var Instance = state.Instance = function(clock, className) {
+  var instVarNames = 
+
+  this._clock = clock;
+  this._className = className;
+  this._instVars = {};
+  for (var i = 0; i < instVarNames.length; i++) {
+    this._instVars[instVarNames[i]] = null;
+  }
+}
+
+_.extend(Instance.prototype, {
+  addressOfInstVar: function(instVarName) {
+    // reject undefined instance variables
+    // TODO version these
+    util.assert(this._instVars.hasOwnProperty(instVarName));
+    return this._instVars[instVarName];
+  }
+
+  setInstVarToAddress: function(instVarName, addr) {
+    // reject undefined instance variables
+    util.assert(this._instVars.hasOwnProperty(instVarNames));
+    this._instVars[instVarName] = addr;
   }
 });
 
@@ -237,8 +267,21 @@ _.extend(ClassTable.prototype, {
     var existingClassDef = this._classes[className];
     util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
         "no class exists with name " + className);
+    var instVars = this.instVarsOfClass(className);
+    return new Instance(this._clock, className, instVars);
+  },
 
-    return {__className__: className};
+  instVarsOfClass: function (className) {
+    var existingClassDef = this._classes[className];
+    util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
+        "no class exists with name " + className);
+    var ancestorClass = this._classes[className];
+    var myInstVars = existingClassDef.slice(1);
+    while (ancestorClass = this._classes(ancestorClass[0])) {
+      myInstVars += ancestorClass.slice(1); // TODO remove duplicates?
+    }
+    // TODO find this at definition time?
+    return myInstVars;
   },
 
   methodOfInstanceWithName: function(instance, messageName) {
