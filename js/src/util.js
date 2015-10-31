@@ -3,8 +3,25 @@
 var util = OO.util = {};
 
 
-// Add this method to a function object to make it easy to inherit from
-util.extendSelf = Backbone.Model.extend;
+// Add this method to a function object to make inheritance easy. This is a
+// tweaked version of Backbone's `extend` method for prototype chain extension.
+util.extendSelf = function() {
+  var Parent = this;
+  var Child = Backbone.Model.extend.apply(this, arguments);
+
+  // Backbone's __super__ is wonky - Child has a reference to Parent's
+  // prototype. We'll do our own.
+  delete Child.__super__;
+
+  // give Child (a constructor) a reference to Parent (a constructor)
+  Child.__Super__ = Parent;
+
+  // give instances of Child a reference to Parent's prototype, since instances
+  // use Child's prototype properties and methods and fall through to Parent's
+  Child.prototype.__super__ = Parent.prototype;
+
+  return Child;
+};
 
 
 // Type checkers

@@ -18,7 +18,6 @@ ast.construct = function(parsedAst) {
 var Ast = ast.Ast = function(parsedAst) {
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
-  this.__super__ = this.constructor.__super__;
   // TODO assign astID uniquely
   this.constructChildren(parsedAst.slice(1));
 };
