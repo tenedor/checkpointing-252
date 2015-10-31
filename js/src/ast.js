@@ -38,7 +38,7 @@ _.extend(Ast.prototype, {
     // if this is a parsed ast, construct its appropriate ast node
     if (util.isString(parsedAst[0])) {
       var type = parsedAst[0];
-      return ast.Nodes[type](parsedAst);
+      return new ast.Nodes[type](parsedAst);
 
     // TODO: figure out the correct behavior in this case
     } else if (util.isJSPrimitive(parsedAst)) {
