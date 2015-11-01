@@ -48,7 +48,8 @@ var EvalManager = eval.EvalManager = function(astNode) {
 
 _.extend(Eval.prototype, {
   eval: function() {
-    var complete, returnAddress, instruction, astNode, stack, state, addr;
+    var complete, returnAddress, instruction, astNode, stack, state;
+    var instance, method, args, addr;
 
     // initialize eval loop termination variables
     complete = false;
@@ -81,7 +82,20 @@ _.extend(Eval.prototype, {
           break;
 
         case "send":
-          // TODO
+          instance = instruction[1];
+          method = instruction[2];
+          args = instruction[3];
+          stack = instruction[4];
+
+          // add new eval frame
+          state = {
+            heap: this.heap,
+            stack: stack,
+            classTable: this.classTable
+          };
+          astNode = new Send(instance, method, args);
+          this.evalStack = new EvalStack(this.evalStack, astNode, state);
+
           break;
 
         case "done":
