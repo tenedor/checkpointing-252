@@ -273,12 +273,12 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
 
 // Set Variable
 //   @name varName
-//   @expr value
+//   @expr addr
 var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
   type: "setVar",
 
   evalSelf: function(s, evaledArgs) {
-    s.stack.setVarToValue(evaledArgs[0], evaledArgs[1]);
+    s.stack.setVarToAddr(evaledArgs[0], evaledArgs[1]);
     return ["done", undefined];
   }
 });
@@ -287,15 +287,15 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
 // Set Instance Variable
 //   @expr instance // TODO - update the parser to provide this value
 //   @name instVarName
-//   @expr value
+//   @expr addr 
 var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
   type: "setInstVar",
 
   evalSelf: function(s, evaledArgs) {
     var instance = s.heap.valueAtAddress(evaledArgs[0]);
     var instVarName = s.heap.valueAtAddress(evaledArgs[1]).literal;
-    var value = evaledArgs[2]; // TODO rename "value" to "address" everywhere
-    instance.setInstVarToAddress(instVarName, value);
+    var addr = evaledArgs[2];
+    instance.setInstVarToAddress(instVarName, addr);
     return ["done", undefined];
   }
 });
@@ -321,7 +321,7 @@ var GetVar = ast.GetVar = ast.Nodes["getVar"] = Expr.extend({
   type: "getVar",
 
   evalSelf: function(s, evaledArgs) {
-    var addr = s.stack.valueOfVar(evaledArgs[0]);
+    var addr = s.stack.addrOfVar(evaledArgs[0]);
     return ["done", addr];
   }
 });
@@ -431,7 +431,7 @@ var This = ast.This = ast.Nodes["this"] = Expr.extend({
   type: "this"
 
   evalSelf: function(s, evaledArgs) {
-    var addr = s.stack.valueOfVar("self");
+    var addr = s.stack.addrOfVar("self");
     return ["done", addr];
   }
 });

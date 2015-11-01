@@ -142,30 +142,30 @@ _.extend(Stack.prototype, {
 
   // return value from the nearest scope that presently contains a declaration;
   // return undefined if no declaration exists
-  valueOfVar: function(varName) {
+  addrOfVar: function(varName) {
     var variable = this._vars[varName];
-    var localValue = variable && variable.valueAtTime(this._clock.time);
+    var localAddr = variable && variable.valueAtTime(this._clock.time);
 
     // return local value or bubble up
-    if (localValue !== undefined) {
-      return localValue;
+    if (localAddr !== undefined) {
+      return localAddr;
     } else {
-      return this._parent ? this._parent.valueOfVar(varName) : undefined;
+      return this._parent ? this._parent.addrOfVar(varName) : undefined;
     };
   },
 
   // set value in the nearest scope that presently contains a declaration;
   // error if no declaration exists
-  setVarToValue: function(varName, value) { // TODO "setVarToAddress"
+  setVarToAddr: function(varName, addr) {
     var variable = this._vars[varName];
-    var localValue = variable && variable.valueAtTime(this._clock.time);
+    var localAddr = variable && variable.valueAtTime(this._clock.time);
 
     // set value locally or bubble up
-    if (localValue !== undefined) {
-      variable.setValueAtTime(value, this._clock.time);
+    if (localAddr !== undefined) {
+      variable.setValueAtTime(addr, this._clock.time);
     } else {
       util.assert(this._parent, "cannot set an undeclared variable");
-      this._parent.setVarToValue(varName, value);
+      this._parent.setVarToAddr(varName, addr);
     };
   },
 
