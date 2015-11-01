@@ -179,29 +179,24 @@ _.extend(Stack.prototype, {
 // Instance
 //   @clock clock
 //   @string className
-var Instance = state.Instance = function(clock, className) {
-  var instVarNames = 
-
+var Instance = state.Instance = function(clock, className, instVarNames) {
   this._clock = clock;
   this._className = className;
   this._instVars = {};
   for (var i = 0; i < instVarNames.length; i++) {
-    this._instVars[instVarNames[i]] = null;
+    this._instVars[instVarNames[i]] = VersionedValue(null, this._clock.time);
   }
 }
 
 _.extend(Instance.prototype, {
   addressOfInstVar: function(instVarName) {
-    // reject undefined instance variables
-    // TODO version these
     util.assert(this._instVars.hasOwnProperty(instVarName));
-    return this._instVars[instVarName];
+    return this._instVars[instVarName].valueAtTime(this._clock.time);
   }
 
   setInstVarToAddress: function(instVarName, addr) {
-    // reject undefined instance variables
     util.assert(this._instVars.hasOwnProperty(instVarNames));
-    this._instVars[instVarName] = addr;
+    this._instVars[instVarName].setValueAtTime(addr, this._clock.time);
   }
 });
 
@@ -236,7 +231,8 @@ _.extend(ClassTable.prototype, {
     util.assert(util.isArray(instVarNames), "instVarNames must be an array");
 
     // a class def is [className, instVar0, instVar1, ...]
-    classDef = [superClassName].concat(instVarNames);
+    // TODO remove duplicates
+    classDef = [superClassName].concat(superClass.slice(1)).concat(instVarNames);
     versioned = new VersionedValue(classDef, this._clock.time);
     this._classes[className] = versioned;
     this._methodTables[className] = {};
@@ -267,25 +263,12 @@ _.extend(ClassTable.prototype, {
     var existingClassDef = this._classes[className];
     util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
         "no class exists with name " + className);
-    var instVars = this.instVarsOfClass(className);
-    return new Instance(this._clock, className, instVars);
-  },
-
-  instVarsOfClass: function (className) {
-    var existingClassDef = this._classes[className];
-    util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
-        "no class exists with name " + className);
-    var ancestorClass = this._classes[className];
-    var myInstVars = existingClassDef.slice(1);
-    while (ancestorClass = this._classes(ancestorClass[0])) {
-      myInstVars += ancestorClass.slice(1); // TODO remove duplicates?
-    }
-    // TODO find this at definition time?
-    return myInstVars;
+    var instVarNames = existingClassDef.slice(1);
+    return new Instance(this._clock, className, instVarNames);
   },
 
   methodOfInstanceWithName: function(instance, messageName) {
-    var className = instance.__className__;
+    var className = instance._className;
     var definingClass = this.classDefiningMethodOfClassWithName(className,
         messageName);
     var mt, methodDecl;
