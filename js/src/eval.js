@@ -2,6 +2,7 @@
 
 var util = OO.util;
 var state = OO.state;
+var classes = OO.classes;
 
 var eval = OO.eval = {};
 

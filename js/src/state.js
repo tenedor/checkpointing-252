@@ -201,6 +201,17 @@ _.extend(Instance.prototype, {
 });
 
 
+Instance.extend = util.extendSelf;
+
+var LiteralInstance = state.Instance = Instance.extend({
+  constructor: function(className, literal) {
+    this.constructor.__Super__.apply(this, [null, className, []]);
+
+    this.literal = literal;
+  }
+});
+
+
 // ClassTable
 //   @clock clock
 var ClassTable = state.ClassTable = function(clock) {
@@ -279,7 +290,6 @@ _.extend(ClassTable.prototype, {
     jt[methodName] = jetDef;
   },
 
-  // TODO need a mechanism to make new instances of literal classes
   newInstance: function(className) {
     // require class existence
     var existingClassDef = this._classes[className];
@@ -287,6 +297,10 @@ _.extend(ClassTable.prototype, {
         "no class exists with name " + className);
     var instVarNames = existingClassDef.slice(1);
     return new Instance(this._clock, className, instVarNames);
+  },
+
+  newLiteralInstance: function(className, literal) {
+    // TODO make a new literal
   },
 
   methodOfInstanceWithName: function(instance, methodName) {
