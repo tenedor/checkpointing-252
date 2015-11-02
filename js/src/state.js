@@ -207,8 +207,10 @@ var ClassTable = state.ClassTable = function(clock) {
   this._clock = clock;
   this._classes = {};
   this._methodTables = {};
+  this._jetTables = {};
 
   // declare Object class
+  // TODO does this go in classes.js?
   this._classes["Object"] = new VersionedValue([undefined], this._clock.time);
   this._methodTables["Object"] = {};
 };
@@ -221,7 +223,7 @@ _.extend(ClassTable.prototype, {
 
     var existingClassDef = this._classes[className];
     var superClass = this._classes[superClassName];
-    var classDef, versioned;
+    var classDef, versioned, instVars;
 
     // forbid class redefinition and require superclass existence
     util.assert(!(existingClassDef && existingClassDef.valueAtTime(this._clock.time)),
@@ -231,8 +233,9 @@ _.extend(ClassTable.prototype, {
     util.assert(util.isArray(instVarNames), "instVarNames must be an array");
 
     // a class def is [className, instVar0, instVar1, ...]
+    instVars = superClass.slice(1).concat(instVarNames);
     // TODO remove duplicates
-    classDef = [superClassName].concat(superClass.slice(1)).concat(instVarNames);
+    classDef = [superClassName].concat(instVars);
     versioned = new VersionedValue(classDef, this._clock.time);
     this._classes[className] = versioned;
     this._methodTables[className] = {};
@@ -258,6 +261,25 @@ _.extend(ClassTable.prototype, {
     };
   },
 
+  declareJet: function(className, methodName, jetDef) {
+    var existingClassDef = this._classes[className];
+    var jt;
+
+    // require class existence
+    util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
+        "no class exists with name " + className);
+    util.assert(util.isArray(argNames), "argNames must be an array");
+
+    // create jet table; check for existence of jet
+    this._jetTables.hasOwnProperty(className) || (this._jetTables[className] = {});
+    jt = this._jetTables[className];
+    util.assert(!jt.hasOwnProperty(methodName),
+        "jet " + methodName + " of class " + className + " already exists!");
+
+    jt[methodName] = jetDef;
+  },
+
+  // TODO need a mechanism to make new instances of literal classes
   newInstance: function(className) {
     // require class existence
     var existingClassDef = this._classes[className];
@@ -267,21 +289,28 @@ _.extend(ClassTable.prototype, {
     return new Instance(this._clock, className, instVarNames);
   },
 
-  methodOfInstanceWithName: function(instance, messageName) {
+  methodOfInstanceWithName: function(instance, methodName) {
     var className = instance._className;
     var definingClass = this.classDefiningMethodOfClassWithName(className,
-        messageName);
-    var mt, methodDecl;
+        methodName);
+    var mt, jt, methodDecl;
 
     // confirm that a defining class exists
-    util.assert(definingClass, className + " object has no method named " +
-        messageName);
+    if (definingClass) {
+      // get method declaration
+      mt = this._methodTables[definingClass];
+      methodDecl = mt[methodName].valueAtTime(this._clock.time);
+      return {astID: methodDecl[0], argNames: methodDecl.slice(1)}
+    } else {
+      // look for a jet otherwise
+      definingClass = this.classDefiningJetOfClassWithName(className, methodName);
+      util.assert(definingClass, className + " object has no method named " +
+          methodName);
+      jt = this._jetTables[definingClass];
+      methodDecl = jt[methodName];
 
-    // get method declaration
-    mt = this._methodTables[definingClass];
-    methodDecl = mt[messageName].valueAtTime(this._clock.time);
-
-    return {astID: methodDecl[0], argNames: methodDecl.slice(1)}
+      return methodDecl;
+    }
   },
 
   // return the first class that satisfies pred, searching first on the given
@@ -309,16 +338,28 @@ _.extend(ClassTable.prototype, {
   // return the first class that defines a method for a given methodName,
   // searching first on the given class and then on its ancestors;
   // return undefined if no such class is found
-  classDefiningMethodOfClassWithName: function(className, messageName) {
+  classDefiningMethodOfClassWithName: function(className, methodName) {
     var that = this;
 
-    // return true if messageName is defined for className
+    // return true if methodName is defined for className
     var pred = function(className) {
       var mt = that._methodTables[className];
-      return mt[messageName] && mt[messageName].valueAtTime(that._clock.time);
+      return mt[methodName] && mt[methodName].valueAtTime(that._clock.time);
     };
 
-    return this.classOrFirstAncestorySuchThat(className, pred);
+    return this.classOrFirstAncestorSuchThat(className, pred);
+  },
+
+  classDefiningJetOfClassWithName: function(className, jetName) {
+    var that = this;
+
+    // return true if jetName is defined for className
+    var pred = function(className) {
+      var jt = that._jetTables[className];
+      return jt && jt[jetName];
+    };
+
+    return this.classOrFirstAncestorSuchThat(className, pred);
   }
 });
 

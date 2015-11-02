@@ -287,7 +287,7 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
 // Set Instance Variable
 //   @expr instance // TODO - update the parser to provide this value
 //   @name instVarName
-//   @expr addr 
+//   @expr addr
 var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
   type: "setInstVar",
 
@@ -362,26 +362,29 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     if (evaledArgs.length < this.children.length) {
       return this.__super__.updateArgs.apply(this, arguments);
     } else {
-      // TODO make all of this rigorous
-      var instance = s.classTable.newInstance("null");
+      var instance = s.classTable.newInstance("LiteralNull"); // TODO change this name when def'd
       var addr = s.heap.storeValue(instance);
       return ["done", addr];
     };
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO make all of this rigorous
     var receiver = evaledArgs[0];
     var messageName = evaledArgs[1];
     var args = evaledArgs.slice(2);
     var method = s.classTable.methodOfInstanceWithName(receiver, messageName);
-    var newStack = s.stack.stackWithNewFrame();
-    newStack.declare("self", receiver);
-    // TODO - declare "super" varName?
-    _.each(method.argNames, function(name, i) {
-      newStack.declare(name, args[i]);
-    });
-    return ["eval", method.methodBody, newStack];
+
+    if (util.isFunction(method)) {
+      return ["done", method(receiver, args, s.heap)];
+    } else {
+      var newStack = s.stack.stackWithNewFrame();
+      newStack.declare("self", receiver);
+      // TODO - declare "super" varName?
+      _.each(method.argNames, function(name, i) {
+        newStack.declare(name, args[i]);
+      });
+      return ["eval", method.methodBody, newStack];
+    }
   }
 });
 

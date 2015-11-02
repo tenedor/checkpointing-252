@@ -36,6 +36,9 @@ var EvalManager = eval.EvalManager = function(astNode) {
   this.heap = new Heap(this.clock);
   this.classTable = new ClassTable(this.clock);
 
+  // TODO declare literal classes
+  classes.declareBuiltins(this.classTable);
+
   // base eval frame
   stack = new Stack(this.clock, undefined);
   state = {
