@@ -15,11 +15,11 @@ ast.construct = function(parsedAst) {
 
 // AST
 //   [abstract]
-var Ast = ast.Ast = function(parsedAst) {
+var Ast = ast.Ast = function(parsedAst, uidStream) {
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
-  // TODO assign astID uniquely
-  this.constructChildren(parsedAst.slice(1));
+  this.uid = uidStream();
+  this.constructChildren(parsedAst.slice(1), uidStream);
 };
 
 _.extend(Ast.prototype, {
