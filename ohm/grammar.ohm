@@ -5,6 +5,8 @@ O {
   ProgramPart
     = ClassDecl
     | MethodDecl
+    | If
+    | While
     | Stmt
 
   ClassDecl
@@ -22,6 +24,15 @@ O {
   MethodBody
     = '=' Expr ';'         -- expr
     | '{' Stmt* Expr? '}'  -- stmt
+
+  If
+    = if '(' Expr ')' StmtBlock StmtBlock
+
+  While
+    = while '(' Expr ')' StmtBlock
+
+  StmtBlock
+    = '{' Stmt* '}'
 
   Stmt
     = var VarDeclPart (',' VarDeclPart)* ';'  -- varDecls
@@ -120,6 +131,8 @@ O {
 
   and        = 'and' ~alnum
   class      = 'class' ~alnum
+  if         = 'if' ~alnum
+  while      = 'while' ~alnum
   def        = 'def' ~alnum
   extends    = 'extends' ~alnum
   falseK     = 'false' ~alnum
