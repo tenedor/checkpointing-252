@@ -59,9 +59,9 @@ _.extend(Ast.prototype, {
 
   eval: function(s, evaledArgs) {
     if (evaledArgs.length < this.children.length) {
-      return evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs);
     } else {
-      return evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs);
     };
   },
 
@@ -126,12 +126,12 @@ var If = ast.If = ast.Nodes["if"] = Stmt.extend({
 
   eval: function(s, evaledArgs) {
     if (evaledArgs.length < 1) {
-      return evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs);
     } else if (evaledArgs.length < 2) {
       // detect truthiness
       return ["send", evaledArgs[0], "isTruthy", [], s.stack];
     } else {
-      return evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs);
     };
   },
 
@@ -160,12 +160,12 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
 
   eval: function(s, evaledArgs) {
     if (evaledArgs.length < 1) {
-      return evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs);
     } else if (evaledArgs.length < 2) {
       // detect truthiness
       return ["send", evaledArgs[0], "isTruthy", [], s.stack];
     } else {
-      return evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs);
     };
   },
 
@@ -232,9 +232,9 @@ var MethodDecl = ast.MethodDecl = ast.Nodes["methodDecl"] = Stmt.extend({
 
   eval: function(s, evaledArgs) {
     if (evaledArgs.length < this.children.length - 1) {
-      return evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs);
     } else {
-      return evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs);
     };
   },
 
@@ -447,7 +447,7 @@ var Literal = ast.Literal = Expr.extend({
   type: "literal",
 
   eval: function(s, evaledArgs) {
-    return evalSelf(s, evaledArgs);
+    return this.evalSelf(s, evaledArgs);
   }
 });
 
