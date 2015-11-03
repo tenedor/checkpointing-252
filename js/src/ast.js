@@ -91,6 +91,9 @@ var Program = ast.Program = ast.Nodes["program"] = Ast.extend({
 
   constructChildren: function(parsedAsts) {
     var seq = ["seq"].concat(parsedAsts);
+    if (seq[seq.length - 1][0] === "exprStmt") {
+      seq[seq.length - 1][0] = "return";
+    };
     parsedAsts = [seq];
     this.children = this.constructAsts(parsedAsts);
   }
