@@ -200,8 +200,9 @@ _.extend(Instance.prototype, {
   }
 });
 
-
 Instance.extend = util.extendSelf;
+
+
 // LiteralInstance
 //   @string className
 //   @JSliteral literal
