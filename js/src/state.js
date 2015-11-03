@@ -311,15 +311,17 @@ _.extend(ClassTable.prototype, {
         methodName);
     var mt, jt, methodDecl;
 
-    // confirm that a defining class exists
+    // look for a method definition
     if (definingClass) {
       // get method declaration
       mt = this._methodTables[definingClass];
       methodDecl = mt[methodName].valueAtTime(this._clock.time);
       return {astID: methodDecl[0], argNames: methodDecl.slice(1)}
+
+    // look for a jet otherwise
     } else {
-      // look for a jet otherwise
       definingClass = this.classDefiningJetOfClassWithName(className, methodName);
+      // error if no method exists
       util.assert(definingClass, className + " object has no method named " +
           methodName);
       jt = this._jetTables[definingClass];
