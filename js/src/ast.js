@@ -349,12 +349,6 @@ var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
 var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
   type: "send",
 
-  constructChildren: function(parsedAsts) {
-    var args = parsedAsts[2];
-    parsedAsts = parsedAsts.slice(0, 2).concat(args);
-    this.children = this.constructAsts(parsedAsts);
-  },
-
   updateArgs: function(s, evaledArgs, newEvaledArg) {
     if (evaledArgs.length < this.children.length) {
       return this.__super__.updateArgs.apply(this, arguments);
@@ -410,12 +404,6 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
 //   @expr* args
 var New = ast.New = ast.Nodes["new"] = Expr.extend({
   type: "new",
-
-  constructChildren: function(parsedAsts) {
-    var args = parsedAsts[1];
-    parsedAsts = parsedAsts.slice(0, 1).concat(argNames);
-    this.children = this.constructAsts(parsedAsts);
-  },
 
   updateArgs: function(s, evaledArgs, newEvaledArg) {
     if (evaledArgs.length < this.children.length) {
