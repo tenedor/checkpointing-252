@@ -36,8 +36,8 @@ var toAST = g.synthesizedAttribute({
                                                                  ast.push(["exprStmt", toAST(optE)]);
                                                                }
                                                                return ast; },
-  If:                    function(_, _, e, tb, fb)           { return ["if", toAST(e), toAST(tb), toAST(fb)]; },
-  While:                 function(_, _, e, b)                { return ["while", toAST(e), toAST(b)]; },
+  If:                    function(_, _, e, _, tb, fb)           { return ["if", toAST(e), toAST(tb), toAST(fb)]; },
+  While:                 function(_, _, e, _, b)                { return ["while", toAST(e), toAST(b)]; },
   StmtBlock:             function(_, b, _)                   { return ["seq"].concat(toAST(b)); },
   Stmt_varDecls:         function(_, p, _, ps, _)            { return ["varDecls", toAST(p)].concat(toAST(ps)); },
   Stmt_return:           function(_, e, _)                   { return ["return", toAST(e)]; },
