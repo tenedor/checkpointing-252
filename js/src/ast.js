@@ -15,10 +15,11 @@ ast.construct = function(parsedAst) {
 
 // AST
 //   [abstract]
-var Ast = ast.Ast = function(parsedAst, uidStream) { // TODO pass in UID stream/registry
+var Ast = ast.Ast = function(parsedAst, registry) { // TODO pass in registry
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
-  this.uid = uidStream(); // TODO register this somewhere
+  this._registry = registry;
+  this.uid = this._registry.idFromRegisteringObject(this);
   this.constructChildren(parsedAst.slice(1), uidStream);
 };
 
@@ -42,7 +43,7 @@ _.extend(Ast.prototype, {
     // if this is a parsed ast, construct its appropriate ast node
     if (util.isString(parsedAst[0])) {
       var type = parsedAst[0];
-      return new ast.Nodes[type](parsedAst);
+      return new ast.Nodes[type](parsedAst, this._registry);
 
     // else, this is a list of parsed asts
     } else {
@@ -368,18 +369,23 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     var messageName = evaledArgs[1];
     var args = evaledArgs.slice(2);
     var method = s.classTable.methodOfInstanceWithName(receiver, messageName);
+    var newStack, methodNode;
 
+    // if method is a jet, evaluate it in place and return
     if (util.isFunction(method)) {
       return ["done", method(receiver, args, s.heap)];
+
+    // else, retrieve the ast corresponding to the method's astID and eval it
     } else {
-      var newStack = s.stack.stackWithNewFrame();
+      newStack = s.stack.stackWithNewFrame();
       newStack.declare("self", receiver);
       // TODO - declare "super" varName?
       _.each(method.argNames, function(name, i) {
         newStack.declare(name, args[i]);
       });
-      return ["eval", method.methodBody, newStack]; // TODO look up methodBody from astID
-    }
+      methodNode = this._registry.objectForId(method.astID);
+      return ["eval", methodNode, newStack];
+    };
   }
 });
 
