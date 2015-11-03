@@ -375,7 +375,8 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     var receiver = evaledArgs[0];
     var messageName = evaledArgs[1];
     var args = evaledArgs.slice(2);
-    var method = s.classTable.methodOfInstanceWithName(receiver, messageName);
+    var receiverVal = s.heap.valueAtAddress(receiver);
+    var method = s.classTable.methodOfInstanceWithName(receiverVal, messageName);
     var newStack, methodNode;
 
     // if method is a jet, evaluate it in place and return
