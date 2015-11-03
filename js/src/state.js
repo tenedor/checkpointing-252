@@ -202,7 +202,9 @@ _.extend(Instance.prototype, {
 
 
 Instance.extend = util.extendSelf;
-
+// LiteralInstance
+//   @string className
+//   @JSliteral literal
 var LiteralInstance = state.Instance = Instance.extend({
   constructor: function(className, literal) {
     this.constructor.__Super__.apply(this, [null, className, []]);
@@ -300,7 +302,7 @@ _.extend(ClassTable.prototype, {
   },
 
   newLiteralInstance: function(className, literal) {
-    // TODO make a new literal
+    return new LiteralInstance(className, literal);
   },
 
   methodOfInstanceWithName: function(instance, methodName) {
