@@ -361,7 +361,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     if (evaledArgs.length < this.children.length) {
       return this.__super__.updateArgs.apply(this, arguments);
     } else {
-      var instance = s.classTable.newInstance("LiteralNull"); // TODO change this name when def'd
+      var instance = s.classTable.newLiteralInstance("Null", null);
       var addr = s.heap.storeValue(instance);
       return ["done", addr];
     };
