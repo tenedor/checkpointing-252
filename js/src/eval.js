@@ -37,7 +37,6 @@ var EvalManager = eval.EvalManager = function(astNode) {
   this.heap = new Heap(this.clock);
   this.classTable = new ClassTable(this.clock);
 
-  // TODO declare literal classes
   classes.declareBuiltins(this.classTable);
 
   // base eval frame
@@ -79,7 +78,7 @@ _.extend(Eval.prototype, {
             stack: stack,
             classTable: this.classTable
           };
-          this.evalStack = new EvalStack(this.evalStack, astNode, state); // TODO
+          this.evalStack = new EvalStack(this.evalStack, astNode, state);
 
           // execute next instruction
           instruction = this.evalStack.eval();

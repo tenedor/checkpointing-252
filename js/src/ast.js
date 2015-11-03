@@ -15,10 +15,10 @@ ast.construct = function(parsedAst) {
 
 // AST
 //   [abstract]
-var Ast = ast.Ast = function(parsedAst, uidStream) {
+var Ast = ast.Ast = function(parsedAst, uidStream) { // TODO pass in UID stream/registry
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
-  this.uid = uidStream();
+  this.uid = uidStream(); // TODO register this somewhere
   this.constructChildren(parsedAst.slice(1), uidStream);
 };
 
@@ -134,7 +134,6 @@ var If = ast.If = ast.Nodes["if"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO how do we find out whether a literal is truthy
     var isTruthy = s.heap.valueAtAddress(evaledArgs[1]).literal;
     var block = isTruthy ? this.children[1] : this.children[2];
     return ["eval", block, s.stack.stackWithNewFrame()];
@@ -169,7 +168,6 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO how do we find out whether a literal is truthy
     var isTruthy = s.heap.valueAtAddress(evaledArgs[1]).literal;
     if (isTruthy) {
       return ["eval", this.children[1], s.stack.stackWithNewFrame()];
@@ -342,9 +340,6 @@ var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
 });
 
 
-// TODO: sends need to be generated on the fly by new and super; this might
-// call for some specialer stuff going on in the Send ast node
-//
 // Send
 //   @expr receiver
 //   @name messageName
@@ -383,7 +378,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
       _.each(method.argNames, function(name, i) {
         newStack.declare(name, args[i]);
       });
-      return ["eval", method.methodBody, newStack];
+      return ["eval", method.methodBody, newStack]; // TODO look up methodBody from astID
     }
   }
 });
@@ -416,7 +411,6 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    // TODO make all of this rigorous
     var className = evaledArgs[0];
     var args = evaledArgs.slice(1);
     var instance = s.classTable.newInstance(className);
@@ -448,8 +442,6 @@ var Literal = ast.Literal = Expr.extend({
   eval: function(s, evaledArgs) {
     return evalSelf(s, evaledArgs);
   }
-
-  // TODO: probably there's some common stuff that goes in here
 });
 
 

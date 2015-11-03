@@ -224,7 +224,6 @@ var ClassTable = state.ClassTable = function(clock) {
   this._jetTables = {};
 
   // declare Object class
-  // TODO does this go in classes.js?
   this._classes["Object"] = new VersionedValue([undefined], this._clock.time);
   this._methodTables["Object"] = {};
 };
