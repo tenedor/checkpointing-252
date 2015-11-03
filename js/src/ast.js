@@ -34,7 +34,8 @@ _.extend(Ast.prototype, {
     return _.map(parsedAsts, _.bind(this.constructAst, this));
   },
 
-  constructAst: function(parsedAst) {
+  constructAst: function(parsedAst, registry) {
+    registry || (registry = this._registry);
     if (util.isLiteral(parsedAst)) {
       return parsedAst;
     };
@@ -43,7 +44,7 @@ _.extend(Ast.prototype, {
     // if this is a parsed ast, construct its appropriate ast node
     if (util.isString(parsedAst[0])) {
       var type = parsedAst[0];
-      return new ast.Nodes[type](parsedAst, this._registry);
+      return new ast.Nodes[type](parsedAst, registry);
 
     // else, this is a list of parsed asts
     } else {
