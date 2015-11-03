@@ -31,22 +31,22 @@ _.extend(EvalStack.prototype, {
 // EvalManager
 //   [none]
 var EvalManager = eval.EvalManager = function(astNode) {
-  var stack, state;
+  var stack, _state;
 
-  this.clock = new Clock();
-  this.heap = new Heap(this.clock);
-  this.classTable = new ClassTable(this.clock);
+  this.clock = new state.Clock();
+  this.heap = new state.Heap(this.clock);
+  this.classTable = new state.ClassTable(this.clock);
 
   classes.declareBuiltins(this.classTable);
 
   // base eval frame
-  stack = new Stack(this.clock, undefined);
-  state = {
+  stack = new state.Stack(this.clock, undefined);
+  _state = {
     heap: this.heap,
     stack: stack,
     classTable: this.classTable
   };
-  this.evalStack = new EvalStack(undefined, astNode, state);
+  this.evalStack = new EvalStack(undefined, astNode, _state);
 };
 
 _.extend(EvalManager.prototype, {
