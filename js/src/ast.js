@@ -351,7 +351,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
 
   constructChildren: function(parsedAsts) {
     var args = parsedAsts[2];
-    parsedAsts = parsedAsts.slice(0, 2).concat(argNames);
+    parsedAsts = parsedAsts.slice(0, 2).concat(args);
     this.children = this.constructAsts(parsedAsts);
   },
 
