@@ -51,7 +51,7 @@ var EvalManager = eval.EvalManager = function(astNode) {
 
 _.extend(EvalManager.prototype, {
   eval: function() {
-    var complete, returnAddress, instruction, astNode, stack, state;
+    var complete, returnAddress, instruction, astNode, stack, _state;
     var instance, method, args, addr;
 
     // initialize eval loop termination variables
@@ -73,12 +73,12 @@ _.extend(EvalManager.prototype, {
           stack = instruction[2];
 
           // add new eval frame
-          state = {
+          _state = {
             heap: this.heap,
             stack: stack,
             classTable: this.classTable
           };
-          this.evalStack = new EvalStack(this.evalStack, astNode, state);
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state);
 
           // execute next instruction
           instruction = this.evalStack.eval();
@@ -91,13 +91,13 @@ _.extend(EvalManager.prototype, {
           stack = instruction[4];
 
           // add new eval frame
-          state = {
+          _state = {
             heap: this.heap,
             stack: stack,
             classTable: this.classTable
           };
           astNode = new Send(instance, method, args);
-          this.evalStack = new EvalStack(this.evalStack, astNode, state);
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state);
 
           break;
 
