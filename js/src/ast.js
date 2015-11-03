@@ -458,7 +458,8 @@ var Null = ast.Null = ast.Nodes["null"] = Literal.extend({
   type: "null",
 
   evalSelf: function(s, evaledArgs) {
-    // TODO implement me
+    var instance = s.classTable.newLiteralInstance("Null", null);
+    var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
 });
@@ -470,8 +471,23 @@ var NumberLiteral = ast.NumberLiteral = ast.Nodes["number"] = Literal.extend({
   type: "number",
 
   evalSelf: function(s, evaledArgs) {
-    // TODO implement me
     var value = this.children[0];
+    var instance = s.classTable.newLiteralInstance("Number", value);
+    var addr = s.heap.storeValue(instance);
+    return ["done", addr];
+  }
+});
+
+
+// StringLiteral
+//   @string value
+var StringLiteral = ast.StringLiteral = ast.Nodes["string"] = Literal.extend({
+  type: "string",
+
+  evalSelf: function(s, evaledArgs) {
+    var value = this.children[0];
+    var instance = s.classTable.newLiteralInstance("String", value);
+    var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
 });
@@ -490,7 +506,8 @@ var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
   type: "true",
 
   evalSelf: function(s, evaledArgs) {
-    // TODO implement me
+    var instance = s.classTable.newLiteralInstance("True", true);
+    var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
 });
@@ -502,7 +519,8 @@ var False = ast.False = ast.Nodes["false"] = BooleanLiteral.extend({
   type: "false",
 
   evalSelf: function(s, evaledArgs) {
-    // TODO implement me
+    var instance = s.classTable.newLiteralInstance("False", false);
+    var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
 });
