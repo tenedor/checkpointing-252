@@ -26,7 +26,8 @@ O {
     | '{' Stmt* Expr? '}'  -- stmt
 
   If
-    = if '(' Expr ')' StmtBlock StmtBlock
+    = if '(' Expr ')' StmtBlock 'else' StmtBlock  -- binary
+    | if '(' Expr ')' StmtBlock                   -- unary
 
   While
     = while '(' Expr ')' StmtBlock
