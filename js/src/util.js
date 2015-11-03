@@ -35,6 +35,10 @@ util.isFunction = function(x) {return typeof x === "function";};
 util.isObject = function(x) {
   return typeof x === "object" && !this.isArray(x) && !this.isNull(x);
 };
+util.isLiteral = function(x) {
+  return (util.isNumber(x) || util.isBoolean(x) || util.isString(x) ||
+      util.isNull(x));
+};
 
 
 // Assertion helper

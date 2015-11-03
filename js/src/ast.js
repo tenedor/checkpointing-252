@@ -34,14 +34,15 @@ _.extend(Ast.prototype, {
   },
 
   constructAst: function(parsedAst) {
+    if (util.isLiteral(parsedAst)) {
+      return parsedAst;
+    };
+    util.assert(util.isArray(parsedAst), "illegal argument to constructAst");
+
     // if this is a parsed ast, construct its appropriate ast node
     if (util.isString(parsedAst[0])) {
       var type = parsedAst[0];
       return new ast.Nodes[type](parsedAst);
-
-    // TODO: figure out the correct behavior in this case
-    } else if (util.isJSPrimitive(parsedAst)) {
-      throw Error("TODO - implement me");
 
     // else, this is a list of parsed asts
     } else {
