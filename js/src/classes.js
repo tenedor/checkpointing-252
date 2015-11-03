@@ -10,7 +10,7 @@ var classes = OO.classes = {};
 var jetForFunction = classes.jetForFunction = function(returnType, f) {
   return function(receiver, jetArgs, heap) {
     var funArgs = [heap.valueAtAddress(receiver).literal];
-    var result, instance, addr;
+    var result, instance;
 
     // extract literal args and apply computation
     funArgs.concat(_.map(jetArgs, function(arg) {
@@ -20,18 +20,17 @@ var jetForFunction = classes.jetForFunction = function(returnType, f) {
 
     // construct OO object from result
     instance = new state.LiteralInstance(returnType, result);
-    addr = heap.nextAddress();
-    heap.setAddressToValue(addr, instance);
-    return addr;
+    return heap.storeValue(instance);
   };
 }
 
 
 var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
   classTable.declareJet("Object", "==", function(a, b) {
-    var result = false, instance, addr;
+    var result = false;
     var aval = heap.valueAtAddress(a);
     var bval = heap.valueAtAddress(b);
+    var instance;
 
     if (aval instanceof LiteralInstance && bval instanceof LiteralInstance) {
       result = (aval.literal === b.literal);
@@ -40,9 +39,7 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
     }
 
     instance = new state.LiteralInstance("Boolean", result);
-    addr = heap.nextAddress();
-    heap.setAddressToValue(addr, instance);
-    return addr;
+    return heap.storeValue(instance);
   });
 
   classTable.declareClass("Number", "Object", []);
