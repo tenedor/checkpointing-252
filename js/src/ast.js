@@ -285,7 +285,7 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
 
 
 // Set Instance Variable
-//   @expr instance // TODO - update the parser to provide this value
+//   @expr instance
 //   @name instVarName
 //   @expr addr
 var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
@@ -328,7 +328,7 @@ var GetVar = ast.GetVar = ast.Nodes["getVar"] = Expr.extend({
 
 
 // Get Instance Variable
-//   @expr instance // TODO - update the parser to provide this value
+//   @expr instance
 //   @name instVarName
 var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
   type: "getInstVar",
