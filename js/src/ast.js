@@ -9,7 +9,7 @@ ast.Nodes = {};
 
 // Construct an AST object from a parsed AST array and an ast node registry.
 ast.construct = function(parsedAst, registry) {
-  return this.Ast.prototype.constructAst(parsedArgs, registry);
+  return this.Ast.prototype.constructAst(parsedAst, registry);
 };
 
 
