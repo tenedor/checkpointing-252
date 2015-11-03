@@ -52,7 +52,7 @@ var EvalManager = eval.EvalManager = function(astNode) {
 _.extend(EvalManager.prototype, {
   eval: function() {
     var complete, returnAddress, instruction, astNode, stack, _state;
-    var instance, method, args, addr;
+    var instance, method, args, addr, returnValue;
 
     // initialize eval loop termination variables
     complete = false;
@@ -145,9 +145,15 @@ _.extend(EvalManager.prototype, {
 
     // return the heap value at the returned address;
     // return undefined if the evaluation terminated with no return
-    return (returnAddress !== undefined ?
-        this.heap.valueAtAddress(returnAddress) :
-        undefined);
+    if (returnAddress !== undefined) {
+      returnValue = this.heap.valueAtAddress(returnAddress);
+      if (returnValue instanceof state.LiteralInstance) {
+        returnValue = returnValue.literal;
+      };
+      return returnValue;
+    } else {
+      return;
+    };
   }
 });
 
