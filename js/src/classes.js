@@ -35,7 +35,7 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
     if (aval instanceof LiteralInstance && bval instanceof LiteralInstance) {
       result = (aval.literal === b.literal);
     } else if (aval instanceof Instance && bval instanceof Instance) {
-      result = (a == b);
+      result = (a === b);
     }
 
     instance = new state.LiteralInstance("Boolean", result);
