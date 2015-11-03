@@ -335,18 +335,18 @@ _.extend(ClassTable.prototype, {
   // class and then on each successive ancestor;
   // return undefined if no satisfactory class is found
   classOrFirstAncestorSuchThat: function(className, pred) {
-    var class = this._classes[className];
+    var thisClass = this._classes[className];
     var parentClass;
 
     // confirm that class exists
-    util.assert(class && class.valueAtTime(this._clock.time),
+    util.assert(thisClass && thisClass.valueAtTime(this._clock.time),
         "no class exists with name " + className);
 
     // return className if pred was satisfied, else check parent class
     if (pred(className)) {
       return className;
     } else {
-      parentClass = class[0];
+      parentClass = thisClass[0];
       return (parentClass ?
           this.classOrFirstAncestorSuchThat(parentClass, pred) :
           undefined);
