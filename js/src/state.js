@@ -206,7 +206,7 @@ Instance.extend = util.extendSelf;
 // LiteralInstance
 //   @string className
 //   @JSliteral literal
-var LiteralInstance = state.Instance = Instance.extend({
+var LiteralInstance = state.LiteralInstance = Instance.extend({
   constructor: function(className, literal) {
     this.constructor.__Super__.apply(this, [null, className, []]);
 
