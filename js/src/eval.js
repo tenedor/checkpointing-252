@@ -3,6 +3,7 @@
 var util = OO.util;
 var state = OO.state;
 var classes = OO.classes;
+var ast = OO.ast;
 
 var eval = OO.eval = {};
 
@@ -96,7 +97,8 @@ _.extend(EvalManager.prototype, {
             stack: stack,
             classTable: this.classTable
           };
-          astNode = new Send(instance, method, args);
+          // TODO - add way to construct Send node from prebuilt args
+          astNode = new ast.Send(instance, method, args);
           this.evalStack = new EvalStack(this.evalStack, astNode, _state);
 
           break;
