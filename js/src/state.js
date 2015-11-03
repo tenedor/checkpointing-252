@@ -192,7 +192,7 @@ _.extend(Instance.prototype, {
   addressOfInstVar: function(instVarName) {
     util.assert(this._instVars.hasOwnProperty(instVarName));
     return this._instVars[instVarName].valueAtTime(this._clock.time);
-  }
+  },
 
   setInstVarToAddress: function(instVarName, addr) {
     util.assert(this._instVars.hasOwnProperty(instVarNames));
