@@ -31,7 +31,11 @@ _.extend(Ast.prototype, {
   },
 
   constructAsts: function(parsedAsts) {
-    return _.map(parsedAsts, _.bind(this.constructAst, this));
+    var that = this;
+    var wrappedFn = function(parsedAst) {
+      return that.constructAst(parsedAst);
+    };
+    return _.map(parsedAsts, wrappedFn);
   },
 
   constructAst: function(parsedAst, registry) {
