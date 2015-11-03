@@ -49,7 +49,7 @@ var EvalManager = eval.EvalManager = function(astNode) {
   this.evalStack = new EvalStack(undefined, astNode, state);
 };
 
-_.extend(Eval.prototype, {
+_.extend(EvalManager.prototype, {
   eval: function() {
     var complete, returnAddress, instruction, astNode, stack, state;
     var instance, method, args, addr;
