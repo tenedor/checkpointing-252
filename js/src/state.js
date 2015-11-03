@@ -278,10 +278,8 @@ _.extend(ClassTable.prototype, {
     var existingClassDef = this._classes[className];
     var jt;
 
-    // require class existence
     util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
         "no class exists with name " + className);
-    util.assert(util.isArray(argNames), "argNames must be an array");
 
     // create jet table; check for existence of jet
     this._jetTables.hasOwnProperty(className) || (this._jetTables[className] = {});
