@@ -236,7 +236,7 @@ _.extend(ClassTable.prototype, {
 
     var existingClassDef = this._classes[className];
     var superClass = this._classes[superClassName];
-    var classDef, versioned, instVars;
+    var classDef, versioned, instVars, superInstVars;
 
     // forbid class redefinition and require superclass existence
     util.assert(!(existingClassDef && existingClassDef.valueAtTime(this._clock.time)),
@@ -246,7 +246,8 @@ _.extend(ClassTable.prototype, {
     util.assert(util.isArray(instVarNames), "instVarNames must be an array");
 
     // a class def is [className, instVar0, instVar1, ...]
-    instVars = superClass.slice(1).concat(instVarNames);
+    superInstVars = superClass.valueAtTime(this._clock.time).slice(1);
+    instVars = superInstVars.concat(instVarNames);
     // TODO remove duplicates
     classDef = [superClassName].concat(instVars);
     versioned = new VersionedValue(classDef, this._clock.time);
@@ -295,7 +296,7 @@ _.extend(ClassTable.prototype, {
     var existingClassDef = this._classes[className];
     util.assert(existingClassDef && existingClassDef.valueAtTime(this._clock.time),
         "no class exists with name " + className);
-    var instVarNames = existingClassDef.slice(1);
+    var instVarNames = existingClassDef.valueAtTime(this._clock.time).slice(1);
     return new Instance(this._clock, className, instVarNames);
   },
 
