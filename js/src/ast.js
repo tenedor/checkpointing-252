@@ -19,8 +19,8 @@ var Ast = ast.Ast = function(parsedAst, registry) { // TODO pass in registry
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
   this._registry = registry;
-  this.uid = this._registry.idFromRegisteringObject(this);
-  this.constructChildren(parsedAst.slice(1), uidStream);
+  this.id = this._registry.idFromRegisteringObject(this);
+  this.constructChildren(parsedAst.slice(1));
 };
 
 _.extend(Ast.prototype, {
@@ -242,7 +242,7 @@ var MethodDecl = ast.MethodDecl = ast.Nodes["methodDecl"] = Stmt.extend({
     var methodName = evaledArgs[1];
     var argNames = evaledArgs.slice(2);
     var seq = this.children[this.children.length - 1];
-    s.classTable.declareMethod(className, methodName, argNames, seq.astID);
+    s.classTable.declareMethod(className, methodName, argNames, seq.id);
     return ["done", undefined];
   }
 });
