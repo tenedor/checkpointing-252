@@ -365,6 +365,14 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     };
   },
 
+  eval: function(s, evaledArgs) {
+    if (evaledArgs.length === 1) {
+      return this.updateArgs(s, evaledArgs, this.children[1]);
+    } else {
+      return this.__super__.eval.apply(this, arguments);
+    };
+  },
+
   evalSelf: function(s, evaledArgs) {
     var receiver = evaledArgs[0];
     var messageName = evaledArgs[1];
