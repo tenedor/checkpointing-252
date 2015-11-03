@@ -13,7 +13,7 @@ var jetForFunction = classes.jetForFunction = function(returnType, f) {
     var result, instance;
 
     // extract literal args and apply computation
-    funArgs.concat(_.map(jetArgs, function(arg) {
+    funArgs = funArgs.concat(_.map(jetArgs, function(arg) {
       return heap.valueAtAddress(arg).literal;
     }));
     result = f.apply(this, funArgs);
