@@ -119,8 +119,8 @@ var toAST = g.synthesizedAttribute({
 var O = new Interpreter(g, "Program", toAST);
 
 O.evalAST = function(ast) {
-  if (O.OO && O.OO.eval && O.OO.eval.evalAST) {
-    return O.OO.eval.evalAST(ast);
+  if (O.OO && O.OO.evalAST) {
+    return O.OO.evalAST(ast);
   } else {
     throw new Error("evalAST is not configured correctly");
   };
