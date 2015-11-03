@@ -303,7 +303,7 @@ var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
 // Expression Statement
 //   @expr expression
 var ExprStmt = ast.ExprStmt = ast.Nodes["exprStmt"] = Stmt.extend({
-  type: "exprStmt",
+  type: "exprStmt"
 });
 
 
@@ -430,7 +430,7 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
 // This
 //   [none]
 var This = ast.This = ast.Nodes["this"] = Expr.extend({
-  type: "this"
+  type: "this",
 
   evalSelf: function(s, evaledArgs) {
     var addr = s.stack.addrOfVar("self");
@@ -455,7 +455,7 @@ var Literal = ast.Literal = Expr.extend({
 // Null
 //   [none]
 var Null = ast.Null = ast.Nodes["null"] = Literal.extend({
-  type: "null"
+  type: "null",
 
   evalSelf: function(s, evaledArgs) {
     // TODO implement me
@@ -467,7 +467,7 @@ var Null = ast.Null = ast.Nodes["null"] = Literal.extend({
 // NumberLiteral
 //   @number value
 var NumberLiteral = ast.NumberLiteral = ast.Nodes["number"] = Literal.extend({
-  type: "number"
+  type: "number",
 
   evalSelf: function(s, evaledArgs) {
     // TODO implement me
@@ -487,7 +487,7 @@ var BooleanLiteral = ast.BooleanLiteral = Literal.extend({
 // True
 //   [none]
 var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
-  type: "true"
+  type: "true",
 
   evalSelf: function(s, evaledArgs) {
     // TODO implement me
@@ -499,7 +499,7 @@ var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
 // False
 //   [none]
 var False = ast.False = ast.Nodes["false"] = BooleanLiteral.extend({
-  type: "false"
+  type: "false",
 
   evalSelf: function(s, evaledArgs) {
     // TODO implement me

@@ -26,21 +26,45 @@ var jetForFunction = classes.jetForFunction = function(f) {
 
 
 var jetForEquality = classes.jetForEquality = function() {
-
+  // UNIMPLEMENTED
 }
 
 
 var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
-  classTable.declareClass("Number", "Object", []);
-  classTable.declareJet("Number", "+", jetForFunction(function() {
-    var start = arguments[0];
-    for (var i = 1; i < arguments.length; i++) {
-      start += arguments[i];
-    }
-    return start;
+  classTable.declareClass("LiteralNumber", "Object", []);
+  classTable.declareJet("LiteralNumber", "+", jetForFunction(function(a, b) {
+    return a + b;
   }));
-
-  // TODO
+  classTable.declareJet("LiteralNumber", "-", jetForFunction(function(a, b) {
+    return a - b;
+  }));
+  classTable.declareJet("LiteralNumber", "*", jetForFunction(function(a, b) {
+    return a * b;
+  }));
+  classTable.declareJet("LiteralNumber", "/", jetForFunction(function(a, b) {
+    return a / b;
+  }));
+  classTable.declareJet("LiteralNumber", "toString", jetForFunction(function(a) {
+    return a.toString();
+  }));
+  classTable.declareClass("LiteralString", "Object", []);
+  classTable.declareJet("LiteralString", "+", jetForFunction(function(a, b) {
+    return a + b;
+  }));
+  classTable.declareJet("LiteralString", "substring", jetForFunction(function(string, startIdx, endIdx) {
+    return string.substring(startIdx, endIdx);
+  }));
+  classTable.declareClass("LiteralNull", "Object", []);
+  classTable.declareClass("LiteralBoolean", "Object", []);
+  classTable.declareJet("LiteralBoolean", "not", jetForFunction(function(x) {
+    return !x;
+  }));
+  classTable.declareJet("LiteralBoolean", "and", jetForFunction(function(x, y) {
+    return x && y;
+  }));
+  classTable.declareJet("LiteralBoolean", "or", jetForFunction(function(x, y) {
+    return x || y;
+  }));
 };
 
 })();
