@@ -27,12 +27,12 @@ _.extend(EvalStack.prototype, {
     return this.astNode.updateArgs(this.state, this.evaledArgs, evaledArg);
   },
 
-  // return checkpoint array, just for stack and ct.
-  // heap and classtable is handled by eval manager below
+  // return checkpoint array
+  // we only need to store the level in the list of stacks we're at
   checkpoint: function() {
     var thisCheckpoint = {
-      ast: this.astNode.checkpoint()
-      /* TODO: stack */
+      ast: this.astNode.checkpoint(),
+      stackLevel: this.state.stack.level()
     };
     if (typeof this.parent !== "undefined") {
       thisCheckpoint.parent = this.parent.checkpoint();
@@ -54,7 +54,7 @@ var EvalManager = eval.EvalManager = function(astNode) {
   classes.declareBuiltIns(this.classTable);
 
   // base eval frame
-  stack = new state.Stack(this.clock, undefined);
+  stack = new state.Stack(this.clock, undefined, 0);
   _state = {
     heap: this.heap,
     stack: stack,
@@ -174,9 +174,12 @@ _.extend(EvalManager.prototype, {
   checkpoint: function() {
     // the heap and class table can be stored once.
     // each eval stack frame has to be checkpointed separately
-    return {heap: this.heap.checkpoint(),
+    return {
+      heap: this.heap.checkpoint(),
       classTable: this.classTable.checkpoint(),
-      evalStack: this.evalStack.checkpoint()};
+      stack: this.stack.checkpoint(),
+      evalStack: this.evalStack.checkpoint()
+    };
   }
 });
 

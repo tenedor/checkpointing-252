@@ -129,9 +129,10 @@ _.extend(Heap.prototype, {
 // Stack
 //   @clock clock
 //   @stack parent
-var Stack = state.Stack = function(clock, parent) {
+var Stack = state.Stack = function(clock, parent, level) {
   this._clock = clock;
   this._parent = parent;
+  this._level = level;
   this._vars = {};
 };
 
@@ -175,7 +176,21 @@ _.extend(Stack.prototype, {
 
   // returns a newly-spawned child frame
   stackWithNewFrame: function() {
-    return new Stack(this._clock, this);
+    return new Stack(this._clock, this, this._level + 1);
+  },
+
+  level: function() {
+    return this._level;
+  },
+
+  checkpoint: function() {
+    var thisCheckpoint = {
+      contents: JSON.stringify(this)
+    };
+    if (typeof this.parent !== "undefined") {
+      thisCheckpoint.parent = this.parent.checkpoint();
+    }
+    return thisCheckpoint;
   }
 });
 
