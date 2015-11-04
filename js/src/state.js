@@ -118,6 +118,10 @@ _.extend(Heap.prototype, {
 
   nextAddress: function() {
     return this._nextAddress++;
+  },
+
+  checkpoint: function() {
+    return JSON.stringify(this);
   }
 });
 
