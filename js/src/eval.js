@@ -25,6 +25,22 @@ _.extend(EvalStack.prototype, {
 
   updateArgs: function(evaledArg) {
     return this.astNode.updateArgs(this.state, this.evaledArgs, evaledArg);
+  },
+
+  // return checkpoint array
+  checkpoint: function() {
+    var thisCheckpoint = {
+      ast: this.astNode.checkpoint()
+    };
+    if (typeof this.parent !== "undefined") {
+      thisCheckpoint.parent = this.parent.checkpoint();
+    }
+    return thisCheckpoint;
+  },
+
+  // resets this object to the state specified
+  importCheckpoint: function(checkpoint) {
+
   }
 });
 

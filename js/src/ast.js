@@ -76,6 +76,10 @@ _.extend(Ast.prototype, {
 
   evalSelf: function(s, evaledArgs) {
     return ["done", undefined];
+  },
+
+  checkpoint: function() {
+    return id;
   }
 });
 
