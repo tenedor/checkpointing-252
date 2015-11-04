@@ -381,6 +381,10 @@ _.extend(ClassTable.prototype, {
     };
 
     return this.classOrFirstAncestorSuchThat(className, pred);
+  },
+
+  checkpoint: function() {
+    return JSON.stringify(this);
   }
 });
 

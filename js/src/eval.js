@@ -28,21 +28,16 @@ _.extend(EvalStack.prototype, {
   },
 
   // return checkpoint array, just for stack and ct.
-  // heap is handled by eval manager below
+  // heap and classtable is handled by eval manager below
   checkpoint: function() {
     var thisCheckpoint = {
       ast: this.astNode.checkpoint()
-      /* TODO: state = stack, ct */
+      /* TODO: stack */
     };
     if (typeof this.parent !== "undefined") {
       thisCheckpoint.parent = this.parent.checkpoint();
     }
     return thisCheckpoint;
-  },
-
-  // resets this object to the state specified
-  importCheckpoint: function(checkpoint) {
-
   }
 });
 
@@ -177,9 +172,11 @@ _.extend(EvalManager.prototype, {
   },
 
   checkpoint: function() {
-    // the heap can be stored once.
+    // the heap and class table can be stored once.
     // each eval stack frame has to be checkpointed separately
-    return {heap: this.heap.checkpoint(), evalStack: this.evalStack.checkpoint()};
+    return {heap: this.heap.checkpoint(),
+      classTable: this.classTable.checkpoint(),
+      evalStack: this.evalStack.checkpoint()};
   }
 });
 
