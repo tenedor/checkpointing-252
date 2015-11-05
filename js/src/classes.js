@@ -26,6 +26,15 @@ var jetForFunction = classes.jetForFunction = function(returnType, f) {
 
 
 var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
+  this.declareObjectMethods(classTable);
+  this.declareNumberClass(classTable);
+  this.declareStringClass(classTable);
+  this.declareBooleanClass(classTable);
+  this.declareNullClass(classTable);
+};
+
+
+var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
   classTable.declareJet("Object", "==", function(a, b) {
     var result = false;
     var aval = heap.valueAtAddress(a);
@@ -41,60 +50,85 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
     instance = new state.LiteralInstance("Boolean", result);
     return heap.storeValue(instance);
   });
+
   classTable.declareJet("Object", "isTruthy", jetForFunction("Boolean",
       function(a) {
     return true;
   }));
+};
 
+
+var declareNumberClass = classes.declareNumberClass = function(classTable) {
   classTable.declareClass("Number", "Object", []);
+
   classTable.declareJet("Number", "+", jetForFunction("Number", function(a, b) {
     return a + b;
   }));
+
   classTable.declareJet("Number", "-", jetForFunction("Number", function(a, b) {
     return a - b;
   }));
+
   classTable.declareJet("Number", "*", jetForFunction("Number", function(a, b) {
     return a * b;
   }));
+
   classTable.declareJet("Number", "/", jetForFunction("Number", function(a, b) {
     return a / b;
   }));
+
   classTable.declareJet("Number", "isTruthy", jetForFunction("Boolean",
       function(a) {
     return a !== 0;
   }));
+
   classTable.declareJet("Number", "toString", jetForFunction("String",
       function(a) {
     return a.toString();
   }));
+};
 
+
+var declareStringClass = classes.declareStringClass = function(classTable) {
   classTable.declareClass("String", "Object", []);
+
   classTable.declareJet("String", "+", jetForFunction("String", function(a, b) {
     return a + b;
   }));
+
   classTable.declareJet("String", "substring", jetForFunction("String",
       function(string, startIdx, endIdx) {
     return string.substring(startIdx, endIdx);
   }));
+};
 
+
+var declareBooleanClass = classes.declareBooleanClass = function(classTable) {
   classTable.declareClass("Boolean", "Object", []);
+
   classTable.declareJet("Boolean", "isTruthy", jetForFunction("Boolean",
       function(a) {
     return !!a;
   }));
+
   classTable.declareJet("Boolean", "not", jetForFunction("Boolean",
       function(x) {
     return !x;
   }));
+
   classTable.declareJet("Boolean", "and", jetForFunction("Boolean",
       function(x, y) {
     return x && y;
   }));
+
   classTable.declareJet("Boolean", "or", jetForFunction("Boolean",
       function(x, y) {
     return x || y;
   }));
+};
 
+
+var declareNullClass = classes.declareNullClass = function(classTable) {
   classTable.declareClass("Null", "Object", []);
 };
 
