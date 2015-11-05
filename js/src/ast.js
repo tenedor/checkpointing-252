@@ -554,7 +554,7 @@ var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
   type: "true",
 
   evalSelf: function(s, evaledArgs) {
-    var instance = s.classTable.newLiteralInstance("True", true);
+    var instance = s.classTable.newLiteralInstance("Boolean", true);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
@@ -567,7 +567,7 @@ var False = ast.False = ast.Nodes["false"] = BooleanLiteral.extend({
   type: "false",
 
   evalSelf: function(s, evaledArgs) {
-    var instance = s.classTable.newLiteralInstance("False", false);
+    var instance = s.classTable.newLiteralInstance("Boolean", false);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
