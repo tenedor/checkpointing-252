@@ -76,6 +76,22 @@ var declareNumberClass = classes.declareNumberClass = function(classTable) {
     return a / b;
   }));
 
+  classTable.declareJet("Number", ">", jetForLiteralsFn(function(a, b) {
+    return a > b;
+  }));
+
+  classTable.declareJet("Number", ">=", jetForLiteralsFn(function(a, b) {
+    return a >= b;
+  }));
+
+  classTable.declareJet("Number", "<", jetForLiteralsFn(function(a, b) {
+    return a < b;
+  }));
+
+  classTable.declareJet("Number", "<=", jetForLiteralsFn(function(a, b) {
+    return a <= b;
+  }));
+
   classTable.declareJet("Number", "isTruthy", jetForLiteralsFn(function(a) {
     return a !== 0;
   }));
