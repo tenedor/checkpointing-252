@@ -41,6 +41,10 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
     instance = new state.LiteralInstance("Boolean", result);
     return heap.storeValue(instance);
   });
+  classTable.declareJet("Object", "isTruthy", jetForFunction("Boolean",
+      function(a) {
+    return true;
+  }));
 
   classTable.declareClass("Number", "Object", []);
   classTable.declareJet("Number", "+", jetForFunction("Number", function(a, b) {
@@ -54,6 +58,10 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
   }));
   classTable.declareJet("Number", "/", jetForFunction("Number", function(a, b) {
     return a / b;
+  }));
+  classTable.declareJet("Number", "isTruthy", jetForFunction("Boolean",
+      function(a) {
+    return a !== 0;
   }));
   classTable.declareJet("Number", "toString", jetForFunction("String",
       function(a) {
@@ -70,6 +78,10 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
   }));
 
   classTable.declareClass("Boolean", "Object", []);
+  classTable.declareJet("Boolean", "isTruthy", jetForFunction("Boolean",
+      function(a) {
+    return !!a;
+  }));
   classTable.declareJet("Boolean", "not", jetForFunction("Boolean",
       function(x) {
     return !x;
