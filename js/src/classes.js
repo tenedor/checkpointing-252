@@ -36,18 +36,18 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
 
 var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
   classTable.declareJet("Object", "==", function(a, b) {
-    var result = false;
+    var isEqual = false;
     var aval = heap.valueAtAddress(a);
     var bval = heap.valueAtAddress(b);
     var instance;
 
     if (aval instanceof LiteralInstance && bval instanceof LiteralInstance) {
-      result = (aval.literal === b.literal);
+      isEqual = (aval.literal === b.literal);
     } else if (aval instanceof Instance && bval instanceof Instance) {
-      result = (a === b);
+      isEqual = (a === b);
     }
 
-    instance = new state.LiteralInstance(result);
+    instance = new state.LiteralInstance(isEqual);
     return heap.storeValue(instance);
   });
 
