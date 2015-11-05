@@ -15,7 +15,7 @@ ast.construct = function(parsedAst, registry) {
 
 // AST
 //   [abstract]
-var Ast = ast.Ast = function(parsedAst, registry) { // TODO pass in registry
+var Ast = ast.Ast = function(parsedAst, registry) {
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
   this._registry = registry;
