@@ -81,7 +81,7 @@ var declareNumberClass = classes.declareNumberClass = function(classTable) {
   }));
 
   classTable.declareJet("Number", "toString", jetForLiteralsFn(function(a) {
-    return a.toString();
+    return util.toString(a);
   }));
 };
 
