@@ -81,7 +81,15 @@ _.extend(Ast.prototype, {
 
   evalNextChild: function(s, evaledArgs) {
     var nextChild = this.children[evaledArgs.length];
-    return ["eval", nextChild, s.stack];
+
+    // if next child is a literal, add it directly to evaledArgs
+    if (util.isLiteral(nextChild)) {
+      return this.updateArgs(s, evaledArgs, nextChild);
+
+    // otherwise, eval it as an astNode
+    } else {
+      return ["eval", nextChild, s.stack];
+    };
   },
 
   evalSelf: function(s, evaledArgs) {
@@ -401,11 +409,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
       evaledArgs.splice.apply(evaledArgs, [0, 0].concat(this.children));
     };
 
-    if (evaledArgs.length === 1) {
-      return this.updateArgs(s, evaledArgs, this.children[1]);
-    } else {
-      return this.__super__.eval.apply(this, arguments);
-    };
+    return this.__super__.eval.apply(this, arguments);
   },
 
   evalSelf: function(s, evaledArgs) {
