@@ -227,7 +227,8 @@ Instance.extend = util.extendSelf;
 //   @string className
 //   @JSliteral literal
 var LiteralInstance = state.LiteralInstance = Instance.extend({
-  constructor: function(className, literal) {
+  constructor: function(literal) {
+    var className = util.classNameForLiteral(literal);
     this.constructor.__Super__.apply(this, [null, className, []]);
 
     this.literal = literal;
@@ -320,8 +321,8 @@ _.extend(ClassTable.prototype, {
     return new Instance(this._clock, className, instVarNames);
   },
 
-  newLiteralInstance: function(className, literal) {
-    return new LiteralInstance(className, literal);
+  newLiteralInstance: function(literal) {
+    return new LiteralInstance(literal);
   },
 
   methodOfInstanceWithName: function(instance, methodName) {

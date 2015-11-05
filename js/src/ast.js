@@ -388,7 +388,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     if (evaledArgs.length < this.children.length) {
       return this.__super__.updateArgs.apply(this, arguments);
     } else {
-      var instance = s.classTable.newLiteralInstance("Null", null);
+      var instance = s.classTable.newLiteralInstance(null);
       var addr = s.heap.storeValue(instance);
       return ["done", addr];
     };
@@ -506,7 +506,7 @@ var Null = ast.Null = ast.Nodes["null"] = Literal.extend({
   type: "null",
 
   evalSelf: function(s, evaledArgs) {
-    var instance = s.classTable.newLiteralInstance("Null", null);
+    var instance = s.classTable.newLiteralInstance(null);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
@@ -519,8 +519,8 @@ var NumberLiteral = ast.NumberLiteral = ast.Nodes["number"] = Literal.extend({
   type: "number",
 
   evalSelf: function(s, evaledArgs) {
-    var value = this.children[0];
-    var instance = s.classTable.newLiteralInstance("Number", value);
+    var numberValue = parseFloat(this.children[0]);
+    var instance = s.classTable.newLiteralInstance(numberValue);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
@@ -533,8 +533,8 @@ var StringLiteral = ast.StringLiteral = ast.Nodes["string"] = Literal.extend({
   type: "string",
 
   evalSelf: function(s, evaledArgs) {
-    var value = this.children[0];
-    var instance = s.classTable.newLiteralInstance("String", value);
+    var stringValue = "" + this.children[0];
+    var instance = s.classTable.newLiteralInstance(stringValue);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
@@ -554,7 +554,7 @@ var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
   type: "true",
 
   evalSelf: function(s, evaledArgs) {
-    var instance = s.classTable.newLiteralInstance("Boolean", true);
+    var instance = s.classTable.newLiteralInstance(true);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }
@@ -567,7 +567,7 @@ var False = ast.False = ast.Nodes["false"] = BooleanLiteral.extend({
   type: "false",
 
   evalSelf: function(s, evaledArgs) {
-    var instance = s.classTable.newLiteralInstance("Boolean", false);
+    var instance = s.classTable.newLiteralInstance(false);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
   }

@@ -18,10 +18,8 @@ var jetForFunction = classes.jetForFunction = function(f) {
     }));
     result = f.apply(this, funArgs);
 
-    className = util.classNameForLiteral(result);
-
     // construct OO object from result
-    instance = new state.LiteralInstance(className, result);
+    instance = new state.LiteralInstance(result);
     return heap.storeValue(instance);
   };
 }
@@ -49,7 +47,7 @@ var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
       result = (a === b);
     }
 
-    instance = new state.LiteralInstance("Boolean", result);
+    instance = new state.LiteralInstance(result);
     return heap.storeValue(instance);
   });
 
