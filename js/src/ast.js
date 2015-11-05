@@ -16,6 +16,12 @@ ast.construct = function(parsedAst, registry) {
 // AST
 //   [abstract]
 var Ast = ast.Ast = function(parsedAst, registry) {
+  // pass `{custom: true}` as first argument to short-circuit constructor for
+  // custom behavior
+  if (util.isObject(parsedAst) && parsedAst.custom === true) {
+    return this.customConstructor.apply(this, arguments);
+  };
+
   util.assert(parsedAst[0] === this.type, "expected parsed ast node of type " +
       this.type);
   this._registry = registry;
@@ -25,6 +31,10 @@ var Ast = ast.Ast = function(parsedAst, registry) {
 
 _.extend(Ast.prototype, {
   type: "ast",
+
+  customConstructor: function(options, parsedAst, registry) {
+    util.assert(false, "no custom constructor defined for " + this.type);
+  },
 
   constructChildren: function(parsedAsts) {
     this.children = this.constructAsts(parsedAsts);
