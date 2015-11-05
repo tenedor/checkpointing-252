@@ -39,6 +39,19 @@ util.isLiteral = function(x) {
   return (util.isNumber(x) || util.isBoolean(x) || util.isString(x) ||
       util.isNull(x));
 };
+util.classNameForLiteral = function(x) {
+  if (x === null) {
+    return "Null";
+  }
+
+  switch (typeof x) {
+    case "number": return "Number";
+    case "boolean": return "Boolean";
+    case "string": return "String";
+  };
+
+  util.assert(false, "value is not a literal");
+};
 
 
 // Assertion helper
