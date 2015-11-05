@@ -137,11 +137,11 @@ var Stack = state.Stack = function(clock, parent, level) {
 };
 
 _.extend(Stack.prototype, {
-  declareVar: function(varName, value) {
+  declareVar: function(varName, addr) {
     util.assert(!this._vars.hasOwnProperty(varName),
         "var redeclaration in same stack frame is not supported");
 
-    var versioned = new VersionedValue(value, this._clock.time);
+    var versioned = new VersionedValue(addr, this._clock.time);
     this._vars[varName] = versioned;
   },
 
