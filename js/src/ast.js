@@ -372,6 +372,18 @@ var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
 var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
   type: "send",
 
+  customConstructor: function(options, parsedAst, registry) {
+    // allow construction from pre-evaluated arguments
+    if (options.preEvaledArgs) {
+      this._hasPreEvaledChildren = true;
+      this.children = options.preEvaledArgs;
+      return;
+    };
+
+    util.assert(false,
+        "no custom constructor for send recognizes the options given");
+  },
+
   updateArgs: function(s, evaledArgs, newEvaledArg) {
     if (evaledArgs.length < this.children.length) {
       return this.__super__.updateArgs.apply(this, arguments);
@@ -383,6 +395,12 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
   },
 
   eval: function(s, evaledArgs) {
+    // if children came pre-evaled, inject them into evaledArgs
+    if (this._hasPreEvaledChildren && evaledArgs.length < this.children.length) {
+      evaledArgs.splice(0);
+      evaledArgs.splice.apply(evaledArgs, [0, 0].concat(this.children));
+    };
+
     if (evaledArgs.length === 1) {
       return this.updateArgs(s, evaledArgs, this.children[1]);
     } else {
@@ -415,6 +433,14 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     };
   }
 });
+
+Send.nodeFromEvaledArgs = function(evaledArgs) {
+  var options = {
+    custom: true,
+    preEvaledArgs: evaledArgs
+  };
+  return new Send(options);
+};
 
 
 // Super
