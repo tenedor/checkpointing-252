@@ -356,7 +356,9 @@ var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
 // Send
 //   @expr receiver
 //   @name messageName
-//   @expr* args
+//   @expr arg0
+//   @expr arg1
+//   ...
 var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
   type: "send",
 
@@ -413,7 +415,9 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
 
 // New
 //   @name className
-//   @expr* args
+//   @expr arg0
+//   @expr arg1
+//   ...
 var New = ast.New = ast.Nodes["new"] = Expr.extend({
   type: "new",
 
