@@ -7,7 +7,7 @@ var classes = OO.classes = {};
 
 
 // lifts a function f on JS literals to a function on OO literals
-var jetForFunction = classes.jetForFunction = function(f) {
+var jetForLiteralsFn = classes.jetForLiteralsFn = function(f) {
   return function(receiver, jetArgs, heap) {
     var funArgs = [heap.valueAtAddress(receiver).literal];
     var result, className, instance;
@@ -51,7 +51,7 @@ var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
     return heap.storeValue(instance);
   });
 
-  classTable.declareJet("Object", "isTruthy", jetForFunction(function(a) {
+  classTable.declareJet("Object", "isTruthy", jetForLiteralsFn(function(a) {
     return true;
   }));
 };
@@ -60,27 +60,27 @@ var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
 var declareNumberClass = classes.declareNumberClass = function(classTable) {
   classTable.declareClass("Number", "Object", []);
 
-  classTable.declareJet("Number", "+", jetForFunction(function(a, b) {
+  classTable.declareJet("Number", "+", jetForLiteralsFn(function(a, b) {
     return a + b;
   }));
 
-  classTable.declareJet("Number", "-", jetForFunction(function(a, b) {
+  classTable.declareJet("Number", "-", jetForLiteralsFn(function(a, b) {
     return a - b;
   }));
 
-  classTable.declareJet("Number", "*", jetForFunction(function(a, b) {
+  classTable.declareJet("Number", "*", jetForLiteralsFn(function(a, b) {
     return a * b;
   }));
 
-  classTable.declareJet("Number", "/", jetForFunction(function(a, b) {
+  classTable.declareJet("Number", "/", jetForLiteralsFn(function(a, b) {
     return a / b;
   }));
 
-  classTable.declareJet("Number", "isTruthy", jetForFunction(function(a) {
+  classTable.declareJet("Number", "isTruthy", jetForLiteralsFn(function(a) {
     return a !== 0;
   }));
 
-  classTable.declareJet("Number", "toString", jetForFunction(function(a) {
+  classTable.declareJet("Number", "toString", jetForLiteralsFn(function(a) {
     return a.toString();
   }));
 };
@@ -89,12 +89,12 @@ var declareNumberClass = classes.declareNumberClass = function(classTable) {
 var declareStringClass = classes.declareStringClass = function(classTable) {
   classTable.declareClass("String", "Object", []);
 
-  classTable.declareJet("String", "+", jetForFunction(function(a, b) {
+  classTable.declareJet("String", "+", jetForLiteralsFn(function(a, b) {
     return a + b;
   }));
 
   classTable.declareJet("String", "substring",
-      jetForFunction(function(string, startIdx, endIdx) {
+      jetForLiteralsFn(function(string, startIdx, endIdx) {
     return string.substring(startIdx, endIdx);
   }));
 };
@@ -103,19 +103,19 @@ var declareStringClass = classes.declareStringClass = function(classTable) {
 var declareBooleanClass = classes.declareBooleanClass = function(classTable) {
   classTable.declareClass("Boolean", "Object", []);
 
-  classTable.declareJet("Boolean", "isTruthy", jetForFunction(function(a) {
+  classTable.declareJet("Boolean", "isTruthy", jetForLiteralsFn(function(a) {
     return !!a;
   }));
 
-  classTable.declareJet("Boolean", "not", jetForFunction(function(x) {
+  classTable.declareJet("Boolean", "not", jetForLiteralsFn(function(x) {
     return !x;
   }));
 
-  classTable.declareJet("Boolean", "and", jetForFunction(function(x, y) {
+  classTable.declareJet("Boolean", "and", jetForLiteralsFn(function(x, y) {
     return x && y;
   }));
 
-  classTable.declareJet("Boolean", "or", jetForFunction(function(x, y) {
+  classTable.declareJet("Boolean", "or", jetForLiteralsFn(function(x, y) {
     return x || y;
   }));
 };
