@@ -4,9 +4,9 @@ var util = OO.util;
 var state = OO.state;
 var classes = OO.classes;
 var ast = OO.ast;
+var root = OO.root;
 
 var eval = OO.eval = {};
-
 
 // EvalStack
 //   @clock clock
@@ -27,17 +27,23 @@ _.extend(EvalStack.prototype, {
     return this.astNode.updateArgs(this.state, this.evaledArgs, evaledArg);
   },
 
-  // return checkpoint array
+  // return checkpointed version
   // we only need to store the level in the list of stacks we're at
   checkpoint: function() {
     var thisCheckpoint = {
       ast: this.astNode.checkpoint(),
-      stackLevel: this.state.stack.level()
+      stackLevel: this.state.stack.level(),
+      evaledArgsPacked: JSON.stringify(this.evaledArgs)
     };
     if (typeof this.parent !== "undefined") {
-      thisCheckpoint.parent = this.parent.checkpoint();
+      thisCheckpoint.parent(this.parent.checkpoint());
     }
     return thisCheckpoint;
+  },
+
+  unpack: function(packed) {
+    this.astNode = /* get ID */ undefined;
+    this.state = {}
   }
 });
 
@@ -180,6 +186,45 @@ _.extend(EvalManager.prototype, {
       stack: this.stack.checkpoint(),
       evalStack: this.evalStack.checkpoint()
     };
+  },
+
+  resume: function(checkpoint) {
+    this.heap = JSON.parse(checkpoint.heap);
+    this.clock = this.heap.clock;
+    this.classTable = JSON.parse(checkpoint.classTable);
+    this.stack = JSON.parse(checkpoint.stack);
+
+    // build a list of the stack frames to index into
+    var stackList = [];
+    var currentFrame = this.stack;
+    while (typeof currentFrame !== "undefined") {
+      stackList.append(currentFrame);
+      currentFrame = currentFrame.parent;
+    }
+
+    // reconstruct eval frames
+    var newestFrame, prevFrame, firstFrame;
+    currentFrame = checkpoint.evalStack;
+    while(typeof currentFrame !== "undefined") {
+      currentState = {
+        heap: this.heap,
+        stack: stackList[frame.stackLevel],
+        classTable: this.classTable
+      };
+      newestFrame = new EvalStack(undefined,
+          this.evalStack.astNode._registry.objectForId(frame.ast),
+          currentState);
+      newestFrame.evaledArgs = JSON.parse(currentFrame.evaledArgsPacked);
+      if(typeof prevFrame !== "undefined") {
+        prevFrame.parent = newestFrame;
+      } else {
+        firstFrame = newestFrame;
+      }
+      prevFrame = newestFrame;
+      currentFrame = currentFrame.parent;
+    }
+
+    this.evalStack = firstFrame;
   }
 });
 

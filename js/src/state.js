@@ -184,13 +184,14 @@ _.extend(Stack.prototype, {
   },
 
   checkpoint: function() {
-    var thisCheckpoint = {
-      contents: JSON.stringify(this)
-    };
-    if (typeof this.parent !== "undefined") {
-      thisCheckpoint.parent = this.parent.checkpoint();
-    }
-    return thisCheckpoint;
+    //var thisCheckpoint = {
+    //  contents: JSON.stringify(this)
+    //};
+    //if (typeof this.parent !== "undefined") {
+    //  thisCheckpoint.parent = this.parent.checkpoint();
+    //}
+    //return thisCheckpoint;
+    return JSON.stringify(this);
   }
 });
 
