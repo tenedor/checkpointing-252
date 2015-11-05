@@ -340,6 +340,7 @@ _.extend(ClassTable.prototype, {
     // look for a jet otherwise
     } else {
       definingClass = this.classDefiningJetOfClassWithName(className, methodName);
+
       // error if no method exists
       util.assert(definingClass, className + " object has no method named " +
           methodName);
@@ -361,11 +362,13 @@ _.extend(ClassTable.prototype, {
     util.assert(thisClass && thisClass.valueAtTime(this._clock.time),
         "no class exists with name " + className);
 
+    var classLiteral = thisClass.valueAtTime(this._clock.time);
+
     // return className if pred was satisfied, else check parent class
     if (pred(className)) {
       return className;
     } else {
-      parentClass = thisClass[0];
+      parentClass = classLiteral[0];
       return (parentClass ?
           this.classOrFirstAncestorSuchThat(parentClass, pred) :
           undefined);
