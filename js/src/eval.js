@@ -72,7 +72,7 @@ var EvalManager = eval.EvalManager = function(astNode) {
 _.extend(EvalManager.prototype, {
   eval: function() {
     var complete, returnAddress, instruction, astNode, stack, _state;
-    var instance, method, args, addr, returnValue;
+    var instance, method, args, evaledArgs, addr, returnValue;
 
     // initialize eval loop termination variables
     complete = false;
@@ -110,16 +110,20 @@ _.extend(EvalManager.prototype, {
           args = instruction[3];
           stack = instruction[4];
 
+          // construct new send node - TODO: store node for checkpointing
+          evaledArgs = [instance, method].concat(args);
+          astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs);
+
           // add new eval frame
           _state = {
             heap: this.heap,
             stack: stack,
             classTable: this.classTable
           };
-          // TODO - add way to construct Send node from prebuilt args
-          astNode = new ast.Send(instance, method, args);
           this.evalStack = new EvalStack(this.evalStack, astNode, _state);
 
+          // execute next instruction
+          instruction = this.evalStack.eval();
           break;
 
         case "done":
