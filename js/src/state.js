@@ -204,7 +204,7 @@ var Instance = state.Instance = function(clock, className, instVarNames) {
   this._className = className;
   this._instVars = {};
   for (var i = 0; i < instVarNames.length; i++) {
-    this._instVars[instVarNames[i]] = VersionedValue(null, this._clock.time);
+    this._instVars[instVarNames[i]] = new VersionedValue(null, this._clock.time);
   }
 }
 
