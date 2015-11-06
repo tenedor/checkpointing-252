@@ -429,10 +429,10 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     // else, retrieve the ast corresponding to the method's astID and eval it
     } else {
       newStack = s.stack.stackWithNewFrame();
-      newStack.declare("self", receiver);
+      newStack.declareVar("self", receiver);
       // TODO - declare "super" varName?
       _.each(method.argNames, function(name, i) {
-        newStack.declare(name, args[i]);
+        newStack.declareVar(name, args[i]);
       });
       methodNode = this._registry.objectForId(method.astID);
       return ["eval", methodNode, newStack];
