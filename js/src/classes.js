@@ -1,282 +1,183 @@
 (function() {
 
 var util = OO.util;
-var core = OO.core;
+var state = OO.state;
 
 var classes = OO.classes = {};
 
-classes.setupNativeClasses = function() {
-  this.setupObjectClass();
-  this.declareJSPrimitiveClasses();
-  this.declareBlockClass();
-};
 
-core.on("reset", _.bind(classes.setupNativeClasses, classes));
+// lifts a function f on JS literals to a function on OO literals
+var jetForLiteralsFn = classes.jetForLiteralsFn = function(f) {
+  return function(receiver, jetArgs, heap) {
+    var funArgs = [heap.valueAtAddress(receiver).literal];
+    var result, className, instance;
 
+    // extract literal args and apply computation
+    funArgs = funArgs.concat(_.map(jetArgs, function(arg) {
+      return heap.valueAtAddress(arg).literal;
+    }));
+    result = f.apply(this, funArgs);
 
-// Construct native classes
-// ------------------------
-
-classes.setupObjectClass = function() {
-  core.declareMethod("Object", "initialize", function(self) {});
-
-  core.declareMethod("Object", "===", function(self, x) {
-    return x === self;
-  });
-
-  core.declareMethod("Object", "!==", function(self, x) {
-    return x !== self;
-  });
-
-  core.declareMethod("Object", "isNumber", function(self) {
-    return false;
-  });
-  
-  core.declareMethod("Object", "isTruthy", function(self) {
-    return true;
-  });
-  
-  core.declareMethod("Object", "hasProperty", function(self, selector, defType) {
-    util.assertTypes("Object::hasProperty", [
-      {value: selector, varName: "selector", type: "string"},
-      {value: defType, varName: "defType", type: "string"}
-    ]);
-
-    var Constructor = core.getClass(self);
-    return core.sendToClass(Constructor, "hasProperty", selector, defType);
-  });
-
-  core.declareMethod("Object", "getClass", function(self) {
-    return core.getClassName(self);
-  });
-  
-  core.declareMethod("Object", "ifThenElse", function(self, ifBlock, elseBlock) {
-    util.assertType(ifBlock, "object", "ifThenElse", "ifBlock");
-    util.assertType(elseBlock, "object", "ifThenElse", "elseBlock");
-	
-    if (core.send(self, "isTruthy")) {
-	  core.send(ifBlock, "call");
-	} else {
-	  core.send(elseBlock, "call");
-	}
-  });
- 
-  core.declareMethod("Object", "loop", function(self, loopBlock) {
-    util.assertType(loopBlock, "object", "loop", "loopBlock");
-    util.assertType(self, "number", "loop", "self");
-                    
-    for (i = 0; i < self; i++) {
-      core.send(loopBlock, "call");
-    }
-  });
- 
-//this doesn't work yet.
- /* core.declareMethod("Object", "while", function(self, whileBlock) {
-    util.assertType(whileBlock, "object", "while", "whileBlock");
-                    
-    while (core.send(self, "isTruthy")) {
-      core.send(whileBlock, "call");
-    }
-  });*/
-
-  core.declareClassMethod("Object", "getSuperClass", function(Self) {
-    return util.isObjectClass(Self) ? null : Self.superClass;
-  });
-
-  core.declareClassMethod("Object", "getDefiningClass", function(Self, selector,
-      defType) {
-    util.assertTypes("Object::getDefiningClass", [
-      {value: selector, varName: "selector", type: "string"},
-      {value: defType, varName: "defType", type: "string"}
-    ]);
-
-    return core.getDefiningClass(Self, selector, defType);
-  });
-
-  core.declareClassMethod("Object", "hasProperty", function(Self, selector,
-      defType) {
-    util.assertTypes("Object::hasProperty", [
-      {value: selector, varName: "selector", type: "string"},
-      {value: defType, varName: "defType", type: "string"}
-    ]);
-
-    return !!core.getDefiningClass(Self, selector, defType);
-  });
-};
-
-classes.declareJSPrimitiveClasses = function() {
-  // create js primitive abstract class
-  this.declareJSPrimitiveClass();
-
-  // create classes for each js primitive
-  this.declareNumberClass();
-  this.declareBooleanClasses();
-  this.declareStringClass();
-  this.declareNullClass();
-};
-
-classes.declareJSPrimitiveClass = function() {
-  core.declareClass("JSPrimitive", "Object", [], [], true);
-
-  core.declareMethod("JSPrimitive", "initialize", function(self) {
-    throw new Error("cannot call initialize on a JS primitive class - use " +
-        "direct primitives or the newPrimitiveInstance class method instead");
-  });
-
-  core.declareClassMethod("JSPrimitive", "newPrimitiveInstance", function(Self)
-      {
-    throw new Error("cannot call newPrimitiveInstance on abstract JS " +
-        "primitive " + Self.name);
-  });
-};
-
-classes.declareNumberClass = function() {
-  core.declareClass("Number", "JSPrimitive");
-
-  core.declareClassMethod("Number", "newPrimitiveInstance",
-      function(Self, value) {
-    (util.isString(value)) && (value = parseFloat(value));
-    util.assertType(value, "number", "Number.newPrimitiveInstance", "value");
-    return value;
-  });
-
-  core.declareMethod("Number", "isNumber", function(self) {
-    return true;
-  });
-
-  core.declareMethod("Number", "isTruthy", function(self) {
-    return self !== 0;
-  });
-  
-  core.declareMethod("Number", "+", function(self, number) {
-    util.assertType(number, "number", "Number::+", "number");
-    return self + number;
-  });
-
-  core.declareMethod("Number", "-", function(self, number) {
-    util.assertType(number, "number", "Number::-", "number");
-    return self - number;
-  });
-
-  core.declareMethod("Number", "*", function(self, number) {
-    util.assertType(number, "number", "Number::*", "number");
-    return self * number;
-  });
-
-  core.declareMethod("Number", "/", function(self, number) {
-    util.assertType(number, "number", "Number::/", "number");
-    return self / number;
-  });
-
-  core.declareMethod("Number", "%", function(self, number) {
-    util.assertType(number, "number", "Number::%", "number");
-    return self % number;
-  });
-
-  core.declareMethod("Number", "<", function(self, number) {
-    util.assertType(number, "number", "Number::<", "number");
-    return self < number;
-  });
-
-  core.declareMethod("Number", "<=", function(self, number) {
-    util.assertType(number, "number", "Number::<=", "number");
-    return self <= number;
-  });
-
-  core.declareMethod("Number", ">", function(self, number) {
-    util.assertType(number, "number", "Number::>", "number");
-    return self > number;
-  });
-
-  core.declareMethod("Number", ">=", function(self, number) {
-    util.assertType(number, "number", "Number::>=", "number");
-    return self >= number;
-  });
-};
-
-classes.declareBooleanClasses = function() {
-  // create boolean abstract class
-  this.declareBooleanClass();
-
-  // create classes for true and false
-  this.declareTrueClass();
-  this.declareFalseClass();
+    // construct OO object from result
+    instance = new state.LiteralInstance(result);
+    return heap.storeValue(instance);
+  };
 }
 
-classes.declareBooleanClass = function() {
-  core.declareClass("Boolean", "JSPrimitive");
 
-  core.declareClassMethod("Boolean", "newPrimitiveInstance",
-      function(Self, value) {
-    if (arguments.length < 2) {
-      throw new Error("function Boolean.newPrimitiveInstance may not be " +
-          "called with zero arguments");
-    };
-    return !!value;
-  });
-  
-  core.declareMethod("Boolean", "isTruthy", function(self) {
-    return self;
-  });
+var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
+  // add built-in methods to Object
+  this.declareObjectMethods(classTable);
+
+  // declare abstract literal class
+  this.declareLiteralClass(classTable);
+
+  // declare literal classes
+  this.declareNumberClass(classTable);
+  this.declareStringClass(classTable);
+  this.declareBooleanClass(classTable);
+  this.declareNullClass(classTable);
 };
 
-classes.declareTrueClass = function() {
-  core.declareClass("True", "Boolean");
 
-  core.declareClassMethod("True", "newPrimitiveInstance", function(Self) {
+var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
+  var equalityJetGenerator;
+
+  classTable.declareJet("Object", "initialize", function(){});
+
+  equalityJetGenerator = function(equality) {
+    return function(receiver, jetArgs, heap) {
+      var addr0 = receiver;
+      var addr1 = jetArgs[0];
+      var val0 = heap.valueAtAddress(addr0);
+      var val1 = heap.valueAtAddress(addr1);
+      var isEqual, instance;
+
+      if (val0 instanceof state.LiteralInstance &&
+          val1 instanceof state.LiteralInstance) {
+        isEqual = (val0.literal === val1.literal);
+      } else {
+        isEqual = (addr0 === addr1);
+      }
+
+      instance = new state.LiteralInstance(equality ? isEqual : !isEqual);
+      return heap.storeValue(instance);
+    };
+  };
+
+  classTable.declareJet("Object", "==", equalityJetGenerator(true));
+  classTable.declareJet("Object", "!=", equalityJetGenerator(false));
+
+  classTable.declareJet("Object", "isTruthy", jetForLiteralsFn(function(a) {
     return true;
+  }));
+};
+
+
+var declareLiteralClass = classes.declareLiteralClass = function(classTable) {
+  classTable.declareClass("Literal", "Object", []);
+
+  classTable.declareJet("Literal", "initialize", function(){
+    util.assert(false,
+        "instantiating literal instances with the `new` keyword is forbidden");
   });
 };
 
-classes.declareFalseClass = function() {
-  core.declareClass("False", "Boolean");
 
-  core.declareClassMethod("False", "newPrimitiveInstance", function(Self) {
-    return false;
-  });
+var declareNumberClass = classes.declareNumberClass = function(classTable) {
+  classTable.declareClass("Number", "Literal", []);
+
+  classTable.declareJet("Number", "+", jetForLiteralsFn(function(a, b) {
+    return a + b;
+  }));
+
+  classTable.declareJet("Number", "-", jetForLiteralsFn(function(a, b) {
+    return a - b;
+  }));
+
+  classTable.declareJet("Number", "*", jetForLiteralsFn(function(a, b) {
+    return a * b;
+  }));
+
+  classTable.declareJet("Number", "/", jetForLiteralsFn(function(a, b) {
+    return a / b;
+  }));
+
+  classTable.declareJet("Number", "%", jetForLiteralsFn(function(a, b) {
+    return a % b;
+  }));
+
+  classTable.declareJet("Number", ">", jetForLiteralsFn(function(a, b) {
+    return a > b;
+  }));
+
+  classTable.declareJet("Number", ">=", jetForLiteralsFn(function(a, b) {
+    return a >= b;
+  }));
+
+  classTable.declareJet("Number", "<", jetForLiteralsFn(function(a, b) {
+    return a < b;
+  }));
+
+  classTable.declareJet("Number", "<=", jetForLiteralsFn(function(a, b) {
+    return a <= b;
+  }));
+
+  classTable.declareJet("Number", "unaryPlus", jetForLiteralsFn(function(a) {
+    return a;
+  }));
+
+  classTable.declareJet("Number", "unaryMinus", jetForLiteralsFn(function(a) {
+    return -a;
+  }));
+
+  classTable.declareJet("Number", "isTruthy", jetForLiteralsFn(function(a) {
+    return a !== 0;
+  }));
+
+  classTable.declareJet("Number", "toString", jetForLiteralsFn(function(a) {
+    return util.toString(a);
+  }));
 };
 
-classes.declareStringClass = function() {
-  core.declareClass("String", "JSPrimitive");
 
-  core.declareClassMethod("String", "newPrimitiveInstance",
-      function(Self, value) {
-    if (arguments.length < 2) {
-      throw new Error("function String.newPrimitiveInstance may not be called" +
-          " with zero arguments");
-    };
-    return util.toString(value);
-  });
-  
-  core.declareMethod("String", "isTruthy", function(self) {
-    return self !== "";
-  });
+var declareStringClass = classes.declareStringClass = function(classTable) {
+  classTable.declareClass("String", "Literal", []);
+
+  classTable.declareJet("String", "+", jetForLiteralsFn(function(a, b) {
+    return a + b;
+  }));
+
+  classTable.declareJet("String", "substring",
+      jetForLiteralsFn(function(string, startIdx, endIdx) {
+    return string.substring(startIdx, endIdx);
+  }));
 };
 
-classes.declareNullClass = function() {
-  core.declareClass("Null", "JSPrimitive");
 
-  core.declareClassMethod("Null", "newPrimitiveInstance", function(Self, value) {
-    return null;
-  });
-  
-  core.declareMethod("Null", "isTruthy", function(self) {
-    return false;
-  });
+var declareBooleanClass = classes.declareBooleanClass = function(classTable) {
+  classTable.declareClass("Boolean", "Literal", []);
+
+  classTable.declareJet("Boolean", "isTruthy", jetForLiteralsFn(function(a) {
+    return !!a;
+  }));
+
+  classTable.declareJet("Boolean", "not", jetForLiteralsFn(function(x) {
+    return !x;
+  }));
+
+  classTable.declareJet("Boolean", "and", jetForLiteralsFn(function(x, y) {
+    return x && y;
+  }));
+
+  classTable.declareJet("Boolean", "or", jetForLiteralsFn(function(x, y) {
+    return x || y;
+  }));
 };
 
-classes.declareBlockClass = function() {
-  core.declareClass("Block", "Object", ["block"]);
 
-  core.declareMethod("Block", "initialize", function(self, block) {
-    util.assertType(block, "function", "Block::initialize", "block");
-    core.setInstVar(self, "block", block);
-  });
-
-  core.declareMethod("Block", "call", function(self /* , arg1, arg2, ... */) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    return core.getInstVar(self, "block").apply(core, args);
-  });
+var declareNullClass = classes.declareNullClass = function(classTable) {
+  classTable.declareClass("Null", "Literal", []);
 };
 
 })();

@@ -2,7 +2,29 @@
 
 var util = OO.util = {};
 
-// javascript types
+
+// Add this method to a function object to make inheritance easy. This is a
+// tweaked version of Backbone's `extend` method for prototype chain extension.
+util.extendSelf = function() {
+  var Parent = this;
+  var Child = Backbone.Model.extend.apply(this, arguments);
+
+  // Backbone's __super__ is wonky - Child has a reference to Parent's
+  // prototype. We'll do our own.
+  delete Child.__super__;
+
+  // give Child (a constructor) a reference to Parent (a constructor)
+  Child.__Super__ = Parent;
+
+  // give instances of Child a reference to Parent's prototype, since instances
+  // use Child's prototype properties and methods and fall through to Parent's
+  Child.prototype.__super__ = Parent.prototype;
+
+  return Child;
+};
+
+
+// Type checkers
 util.isNumber = function(x) {return typeof x === "number";};
 util.isBoolean = function(x) {return typeof x === "boolean";};
 util.isString = function(x) {return typeof x === "string";};
@@ -13,109 +35,34 @@ util.isFunction = function(x) {return typeof x === "function";};
 util.isObject = function(x) {
   return typeof x === "object" && !this.isArray(x) && !this.isNull(x);
 };
+util.isLiteral = function(x) {
+  return (util.isNumber(x) || util.isBoolean(x) || util.isString(x) ||
+      util.isNull(x));
+};
+util.classNameForLiteral = function(x) {
+  if (x === null) {
+    return "Null";
+  }
 
-// OO types
-util.isStrictInstance = function(x) {
-  return (this.isObject(x) && x.hasOwnProperty("__className__") &&
-      this.isNameOfExistingClass(x.__className__));
-};
-util.isJSPrimitive = function(x) {
-  return (this.isNumber(x) || this.isBoolean(x) || this.isString(x) ||
-      this.isNull(x));
-};
-util.isInstance = function(x) {
-  return (this.isStrictInstance(x) || this.isJSPrimitive(x));
-};
-util.isClass = function(x) {
-  return this.isObjectWithSuper(x) && this.isOrDerivesFrom(x, OO.ObjectClass);
-};
-util.isObjectClass = function(x) {
-  return x === OO.ObjectClass;
-};
-util.isJSPrimitiveWrapperClass = function(x) {
-  return this.isClass(x) && x.isJSPrimitiveWrapper;
-};
-util.isNameOfExistingClass = function(className) {
-  return OO.classTable.hasOwnProperty(className);
-};
-util.isObjectWithSuper = function(x) {
-  return this.isObject(x) && x.hasOwnProperty('superClass');
-};
-util.isDerivedFrom = function(Derived, Ancestor) {
-  this.assertType(Derived, "objectWithSuper", "isDerivedFrom", "Derived");
-
-  if (this.isObjectClass(Derived)) {
-    return false;
-  };
-  var SuperClass = Derived.superClass;
-  return (SuperClass === Ancestor || this.isDerivedFrom(SuperClass, Ancestor));
-};
-util.isOrDerivesFrom = function(Derived, Ancestor) {
-  return (Derived === Ancestor || this.isDerivedFrom(Derived, Ancestor));
-};
-
-// type checker
-util.assertType = function(value, type, funcName, varName) {
-  switch(type) {
-    case "number":
-      if (this.isNumber(value)) {return;}
-      break;
-    case "boolean":
-      if (this.isBoolean(value)) {return;}
-      break;
-    case "string":
-      if (this.isString(value)) {return;}
-      break;
-    case "array":
-      if (this.isArray(value)) {return;}
-      break;
-    case "function":
-      if (this.isFunction(value)) {return;}
-      break;
-    case "object":
-      if (this.isObject(value)) {return;}
-      break;
-    case "instance":
-      if (this.isInstance(value)) {return;}
-      break;
-    case "class":
-      if (this.isClass(value)) {return;}
-      break;
-    case "instanceOrClass":
-      if (this.isInstance(value) || this.isClass(value)) {return;}
-      break;
-    case "className":
-      if (this.isNameOfExistingClass(value)) {return;}
-      break;
-    case "objectWithSuper":
-      if (this.isObjectWithSuper(value)) {return;}
-      break;
-    default:
-      throw new Error("unknown type " + this.toString(type) + " in call to " +
-          "assertType");
+  switch (typeof x) {
+    case "number": return "Number";
+    case "boolean": return "Boolean";
+    case "string": return "String";
   };
 
-  throw new Error("argument " + this.toString(varName) + " to function " +
-      this.toString(funcName) + " must be of type " + this.toString(type));
+  util.assert(false, "value is not a literal");
 };
 
 
-
-util.assertTypes = function(funcName, typeChecks) {
-  this.assertType(typeChecks, "array", "assertTypes", "typeChecks");
-
-  for (var i = 0; i < typeChecks.length; i++) {
-    var tc = typeChecks[i];
-    this.assertType(tc.value, tc.type, funcName, tc.varName);
+// Assertion helper
+util.assert = function(expression, errorMessage) {
+  if (!expression) {
+    throw new Error(errorMessage);
   };
 };
 
-util.assertTypeError = function(type, funcName, varName) {
-  throw new Error("argument " + this.toString(varName) + " to function " +
-      this.toString(funcName) + " must be of type " + this.toString(type));
-};
 
-// our own toString function...
+// Our custom toString function...
 //
 // because not one of the three different kinds of toString functions built into
 // javascript do (a) what I want, (b) anything internally consistent, (c) what
@@ -127,15 +74,10 @@ util.toString = function(value) {
     return "" + value;
   } else if (this.isArray(value)) {
     return "[" + value + "]";
-  } else if (this.isStrictInstance(value)) {
-    return "{" + this.getClassName(value) + " instance}"
-  } else if (this.isClass(value)) {
-    return "{" + value.name + " class}"
   } else {
     return "{object}";
   };
-  // it was that hard javascript. and that's four lines EXTRA from all you
-  // needed to do.
+  // it was that hard javascript.
 };
 
 })();

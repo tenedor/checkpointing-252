@@ -18,6 +18,85 @@ tests(O,
     expected: 6
   },
   {
+    name: '== jet for literals (1/2)',
+    code: '3 == 3',
+    expected: true
+  },
+  {
+    name: '== jet for literals (2/2)',
+    code: '2 == 3',
+    expected: false
+  },
+  {
+    name: 'if (1/2)',
+    code: 'if (true) {\n' +
+          '  return 1;\n' +
+          '}\n' +
+          'return 2;',
+    expected: 1
+  },
+  {
+    name: 'if (2/2)',
+    code: 'if (false) {\n' +
+          '  return 1;\n' +
+          '}\n' +
+          'return 2;',
+    expected: 2
+  },
+  {
+    name: 'if else (1/2)',
+    code: 'var x = 0;\n' +
+          'if (true) {\n' +
+          '  x = 1;\n' +
+          '} else {\n' +
+          '  x = 2;\n' +
+          '}\n' +
+          'x',
+    expected: 1
+  },
+  {
+    name: 'if else (2/2)',
+    code: 'var x = 0;\n' +
+          'if (false) {\n' +
+          '  x = 1;\n' +
+          '} else {\n' +
+          '  x = 2;\n' +
+          '}\n' +
+          'x',
+    expected: 2
+  },
+  {
+    name: 'if: lexical scope',
+    code: 'var x = 1, y = 10;\n' +
+          'if (true) {\n' +
+          '  var x = 5;\n' +
+          '  y = x + y;\n' +
+          '}\n' +
+          'x + y',
+    expected: 16
+  },
+  {
+    name: 'while',
+    code: 'var i = 0, x = 1;\n' +
+          'while (i < 5) {\n' +
+          '  i = i + 1;\n' +
+          '  x = x * i;\n' +
+          '}\n' +
+          'x == 1 * 2 * 3 * 4 * 5',
+    expected: true
+  },
+  {
+    name: 'while: lexical scope',
+    code: 'var i = 0, x = -100, y = 100;\n' +
+          'while (i < 5) {\n' +
+          '  i = i + 1;\n' +
+          '  var y = 2 * i;\n' +
+          '  x = x + y;\n' +
+          '}\n' +
+          'x + y == 2 * (1 + 2 + 3 + 4 + 5)',
+    expected: true
+  },
+  {
     name: 'method decl, new, and send',
     code: 'def Object.m() { return 42; }\n' +
           'new Object().m()',
@@ -38,29 +117,17 @@ tests(O,
     expected: 3
   },
   {
-    name: 'class decl + method decls + super send (1/3)',
-    code: 'class C;\n' +
-          'def Object.foo() = 1;\n' +
-          'def C.foo() = super.foo() + 41;\n' +
-          'new C().foo()',
-    expected: 42
+    name: '== jet for instances (1/2)',
+    code: 'var x = new Object();\n' +
+          'x == x',
+    expected: true
   },
   {
-    name: 'method decls + super send (2/3)',
-    code: 'def Boolean.foo() = 1;\n' +
-          'def True.foo() = super.foo() + 41;\n' +
-          'true.foo()',
-    expected: 42
-  },
-  {
-    name: 'method decls + super send (3/3)',
-    code: 'class Point with x, y;\n' +
-          'def Point.initialize(x, y) { super.initialize(); this.x = x; this.y = y; }\n' +
-          'class ThreeDeePoint extends Point with z;\n' +
-          'def ThreeDeePoint.initialize(x, y, z) { super.initialize(x, y); this.z = z; }\n' +
-          'def ThreeDeePoint.m() = this.x * 100 + this.y * 10 + this.z;\n' +
-          'new ThreeDeePoint(1, 2, 3).m()',
-    expected: 123
+    name: '== jet for instances (2/2)',
+    code: 'var x = new Object();\n' +
+          'var y = new Object();\n' +
+          'x == y',
+    expected: false
   }
 );
 

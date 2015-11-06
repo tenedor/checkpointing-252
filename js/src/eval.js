@@ -1,255 +1,238 @@
 (function() {
 
 var util = OO.util;
-var core = OO.core;
+var state = OO.state;
+var classes = OO.classes;
+var ast = OO.ast;
+var root = OO.root;
 
 var eval = OO.eval = {};
 
-eval.evalAST = function(ast) {
-  var context = {
-    environment: new Environment(),
-    nameOfHostClass: null
-  };
-
-  return recEval(context, ast);
-};
-
-var Environment = eval.Environment = function(parent) {
+// EvalStack
+//   @clock clock
+//   @evalStack parent
+var EvalStack = eval.EvalStack = function(parent, astNode, state) {
   this.parent = parent;
-  this.vars = {};
+  this.astNode = astNode;
+  this.state = state;
+  this.evaledArgs = [];
 };
 
-Environment.prototype.declare = function(name, value) {
-  this.vars[name] = value;
-};
+_.extend(EvalStack.prototype, {
+  eval: function() {
+    return this.astNode.eval(this.state, this.evaledArgs);
+  },
 
-Environment.prototype.set = function(name, value) {
-  if (this.vars.hasOwnProperty(name)) {
-    this.vars[name] = value;
-  } else if (!this.parent instanceof Environment) {
-    throw new Error("attempt to set undeclared variable " + name);
-  } else {
-    this.parent.set(name, value);
-  };
-};
+  updateArgs: function(evaledArg) {
+    return this.astNode.updateArgs(this.state, this.evaledArgs, evaledArg);
+  },
 
-Environment.prototype.get = function(name) {
-  if (this.vars.hasOwnProperty(name)) {
-    return this.vars[name];
-  } else if (!this.parent instanceof Environment) {
-    throw new Error("attempt to get undeclared variable " + name);
-  } else {
-    return this.parent.get(name);
-  };
-};
-
-var curriedRecEval = function(context) {
-  return function(ast) {return recEval(context, ast);};
-};
-
-var getUID = (function() {
-  var id = 0;
-  return function() {return id++;};
-})();
-
-var ReturnObject = function(scopeUID, value) {
-  this.scopeUID = scopeUID;
-  this.value = value;
-};
-
-var isReturnObject = function(x) {
-  return x instanceof ReturnObject;
-};
-
-var recEval = function(context, ast) {
-  if (!util.isArray(ast)) {
-    if (util.isJSPrimitive(ast) || util.isStrictInstance(ast) || util.isClass(ast)) {
-      return ast;
-    } else {
-      throw new Error("Illegal AST: " + util.toString(ast));
+  // return checkpointed version
+  // we only need to store the level in the list of stacks we're at
+  checkpoint: function() {
+    var thisCheckpoint = {
+      ast: this.astNode.checkpoint(),
+      stackLevel: this.state.stack.level(),
+      evaledArgsPacked: JSON.stringify(this.evaledArgs)
     };
+    if (typeof this.parent !== "undefined") {
+      thisCheckpoint.parent(this.parent.checkpoint());
+    }
+    return thisCheckpoint;
+  },
+
+  unpack: function(packed) {
+    this.astNode = /* get ID */ undefined;
+    this.state = {}
+  }
+});
+
+
+// EvalManager
+//   [none]
+var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
+  var stack, _state;
+
+  this._astRegistry = astRegistry;
+
+  this.clock = new state.Clock();
+  this.heap = new state.Heap(this.clock);
+  this.classTable = new state.ClassTable(this.clock);
+
+  classes.declareBuiltIns(this.classTable);
+
+  // base eval frame
+  stack = new state.Stack(this.clock, undefined, 0);
+  _state = {
+    heap: this.heap,
+    stack: stack,
+    classTable: this.classTable
   };
-  switch (ast[0]) {
-    case "program":
-      OO.reset();
-      var sequence = ast.slice(1);
-      sequence.unshift("seq");
-      var scopedAST = ["scope", sequence];
-      return recEval(context, scopedAST);
-
-    case "seq":
-      var asts = ast.slice(1);
-      var value;
-      for (var i = 0; i < asts.length; i++) {
-        value = recEval(context, asts[i]);
-      };
-      return value;
-
-    case "classDecl":
-      var className = recEval(context, ast[1]);
-      var superClassName = recEval(context, ast[2]);
-      var instVarNames = ast[3].map(curriedRecEval(context));
-      return core.declareClass(className, superClassName, instVarNames);
-
-    case "methodDecl":
-      var className = recEval(context, ast[1]);
-      var methodName = recEval(context, ast[2]);
-      var argNames = ast[3].map(curriedRecEval(context));
-      argNames.unshift("self");
-      var sequence = ast[4].slice(0);
-      sequence.push(["return", ["null"]]);
-      sequence.unshift("seq");
-      var scopedAST = ["scope", sequence];
-
-      context = {
-        environment: context.environment,
-        nameOfHostClass: className
-      };
-
-      var closure = function() {
-        var args = Array.prototype.slice.call(arguments);
-        return recEval(context, ["closure", argNames, args, scopedAST]);
-      };
-
-      return core.declareMethod(className, methodName, closure);
-
-    case "closure":
-      var argNames = ast[1].map(curriedRecEval(context));
-      var args = ast[2];
-      var ast = ast[3];
-      
-      context = {
-        environment: new Environment(context.environment),
-        nameOfHostClass: context.nameOfHostClass
-      };
-
-      var varDecls = ["varDecls"];
-      for (var i = 0; i < argNames.length; i++) {
-        varDecls.push([argNames[i], args[i]]);
-      };
-      recEval(context, varDecls);
-
-      return recEval(context, ast);
-
-    case "scope":
-      var blockedAST = ["block", [], ast[1]];
-      var scopeUID = getUID();
-
-      context = {
-        environment: new Environment(context.environment),
-        nameOfHostClass: context.nameOfHostClass
-      };
-      context.environment.declare("__scopeUID__", scopeUID);
-
-      var scopeRetVal;
-      var scopeError;
-      try {
-        scopeRetVal = core.send(recEval(context, blockedAST), "call");
-      } catch(e) {
-        if (isReturnObject(e) && e.scopeUID === scopeUID) {
-          scopeRetVal = e.value;
-        } else {
-          scopeError = {error: e};
-        };
-      } finally {
-        if (scopeError) {
-          throw scopeError.error;
-        } else {
-          return scopeRetVal;
-        };
-      };
-
-    case "varDecls":
-      for (var i = 1; i < ast.length; i++) {
-        var varName = ast[i][0];
-        var value = recEval(context, ast[i][1]);
-        context.environment.declare(varName, value);
-      };
-      return;
-
-    case "return":
-      var expression = recEval(context, ast[1]);
-      var scopeUID = context.environment.get("__scopeUID__");
-      throw new ReturnObject(scopeUID, expression);
-
-    case "setVar":
-      var varName = ast[1];
-      var value = recEval(context, ast[2]);
-      return context.environment.set(varName, value);
-
-    case "setInstVar":
-      var instVarName = ast[1];
-      var value = recEval(context, ast[2]);
-      var self = context.environment.get("self");
-      return core.setInstVar(self, instVarName, value);
-
-    case "exprStmt":
-      return recEval(context, ast[1]);
-
-    case "null":
-      return null;
-
-    case "true":
-      return true;
-
-    case "false":
-      return false;
-
-    case "number":
-      return parseFloat(ast[1]);
-
-    case "this":
-      return recEval(context, ["getVar", "self"]);
-
-    case "getVar":
-      return context.environment.get(ast[1]);
-
-    case "getInstVar":
-      var self = context.environment.get("self");
-      return core.getInstVar(self, ast[1]);
-
-    case "new":
-      var className = recEval(context, ast[1]);
-      var args = ast.slice(2).map(curriedRecEval(context));
-      args.unshift(className);
-      return core.instantiate.apply(core, args);
-
-    case "send":
-      var recv = recEval(context, ast[1]);
-      var messageName = recEval(context, ast[2]);
-      var args = ast.slice(3).map(curriedRecEval(context));
-      args.unshift(recv, messageName);
-      return core.send.apply(core, args);
-
-    case "super":
-      var superClassName = core.sendToClass(context.nameOfHostClass,
-          "getSuperClass");
-      var self = context.environment.get("self");
-      var messageName = recEval(context, ast[1]);
-      var args = ast.slice(2).map(curriedRecEval(context));
-      args.unshift(superClassName, self, messageName);
-      return core.superSend.apply(core, args);
-
-    case "block":
-      var argNames = ast[1].map(curriedRecEval(context));
-      var sequence = ast[2].slice(0);
-      sequence.unshift("seq");
-
-      var lastIndex = sequence.length - 1;
-      if (sequence[lastIndex][0] === "exprStmt") {
-        sequence[lastIndex] = ["return", sequence[lastIndex]];
-      };
-
-      var closure = function() {
-        var args = Array.prototype.slice.call(arguments);
-        return recEval(context, ["closure", argNames, args, sequence]);
-      };
-
-      return core.instantiate("Block", closure);
-
-    default:
-      throw new Error("Illegal AST!");
-  };
+  this.evalStack = new EvalStack(undefined, astNode, _state);
 };
+
+_.extend(EvalManager.prototype, {
+  eval: function() {
+    var complete, returnAddress, instruction, astNode, stack, _state;
+    var instance, method, args, evaledArgs, addr, returnValue;
+
+    // initialize eval loop termination variables
+    complete = false;
+    returnAddress = undefined;
+
+    // execute first instruction
+    instruction = this.evalStack.eval();
+
+    // eval loop
+    while (!complete) {
+      switch (instruction[0]) {
+        case "skip":
+          instruction = this.evalStack.eval();
+          break;
+
+        case "eval":
+          astNode = instruction[1];
+          stack = instruction[2];
+
+          // add new eval frame
+          _state = {
+            heap: this.heap,
+            stack: stack,
+            classTable: this.classTable
+          };
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state);
+
+          // execute next instruction
+          instruction = this.evalStack.eval();
+          break;
+
+        case "send":
+          instance = instruction[1];
+          method = instruction[2];
+          args = instruction[3];
+          stack = instruction[4];
+
+          // construct new send node - TODO: store node for checkpointing
+          evaledArgs = [instance, method].concat(args);
+          astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs,
+              this._astRegistry);
+
+          // add new eval frame
+          _state = {
+            heap: this.heap,
+            stack: stack,
+            classTable: this.classTable
+          };
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state);
+
+          // execute next instruction
+          instruction = this.evalStack.eval();
+          break;
+
+        case "done":
+          addr = instruction[1];
+
+          // pop eval stack
+          this.evalStack = this.evalStack.parent;
+
+          // propagate value from finished frame to current frame
+          if (this.evalStack) {
+            instruction = this.evalStack.updateArgs(addr);
+
+          // or terminate process if eval stack is exhausted
+          } else {
+            complete = true;
+          };
+          break;
+
+        case "return":
+          addr = instruction[1];
+
+          // pop eval stack until a send astNode or until eval stack exhaustion
+          while (this.evalStack = this.evalStack.parent) {
+            if (this.evalStack.astNode.type === "send") {
+              break;
+            };
+          };
+
+          // generate a done instruction for a send node
+          if (this.evalStack) {
+            instruction = ["done", addr];
+
+          // else terminate the process with the returned value
+          } else {
+            returnAddress = addr;
+            complete = true;
+          };
+          break;
+      };
+
+      // increment the clock
+      this.clock.tick();
+    };
+
+    // return the heap value at the returned address;
+    // return undefined if the evaluation terminated with no return
+    if (returnAddress !== undefined) {
+      returnValue = this.heap.valueAtAddress(returnAddress);
+      if (returnValue instanceof state.LiteralInstance) {
+        returnValue = returnValue.literal;
+      };
+      return returnValue;
+    } else {
+      return;
+    };
+  },
+
+  checkpoint: function() {
+    // the heap and class table can be stored once.
+    // each eval stack frame has to be checkpointed separately
+    return {
+      heap: this.heap.checkpoint(),
+      classTable: this.classTable.checkpoint(),
+      stack: this.stack.checkpoint(),
+      evalStack: this.evalStack.checkpoint()
+    };
+  },
+
+  resume: function(checkpoint) {
+    this.heap = JSON.parse(checkpoint.heap);
+    this.clock = this.heap.clock;
+    this.classTable = JSON.parse(checkpoint.classTable);
+    this.stack = JSON.parse(checkpoint.stack);
+
+    // build a list of the stack frames to index into
+    var stackList = [];
+    var currentFrame = this.stack;
+    while (typeof currentFrame !== "undefined") {
+      stackList.append(currentFrame);
+      currentFrame = currentFrame.parent;
+    }
+
+    // reconstruct eval frames
+    var newestFrame, prevFrame, firstFrame;
+    currentFrame = checkpoint.evalStack;
+    while(typeof currentFrame !== "undefined") {
+      currentState = {
+        heap: this.heap,
+        stack: stackList[frame.stackLevel],
+        classTable: this.classTable
+      };
+      newestFrame = new EvalStack(undefined,
+          this.evalStack.astNode._registry.objectForId(frame.ast),
+          currentState);
+      newestFrame.evaledArgs = JSON.parse(currentFrame.evaledArgsPacked);
+      if(typeof prevFrame !== "undefined") {
+        prevFrame.parent = newestFrame;
+      } else {
+        firstFrame = newestFrame;
+      }
+      prevFrame = newestFrame;
+      currentFrame = currentFrame.parent;
+    }
+
+    this.evalStack = firstFrame;
+  }
+});
 
 })();

@@ -36,19 +36,23 @@ var toAST = g.synthesizedAttribute({
                                                                  ast.push(["exprStmt", toAST(optE)]);
                                                                }
                                                                return ast; },
+  If_binary:             function(_, _, e, _, tb, _, fb)     { return ["if", toAST(e), toAST(tb), toAST(fb)]; },
+  If_unary:              function(_, _, e, _, tb)            { return ["if", toAST(e), toAST(tb), ["seq"]]; },
+  While:                 function(_, _, e, _, b)             { return ["while", toAST(e), toAST(b)]; },
+  Block:                 function(_, b, _)                   { return ["seq"].concat(toAST(b)); },
   Stmt_varDecls:         function(_, p, _, ps, _)            { return ["varDecls", toAST(p)].concat(toAST(ps)); },
   Stmt_return:           function(_, e, _)                   { return ["return", toAST(e)]; },
-  Stmt_instVarAssign:    function(_, _, n, _, e, _)          { return ["setInstVar", toAST(n), toAST(e)]; },
+  Stmt_instVarAssign:    function(_, _, n, _, e, _)          { return ["setInstVar", ["this"], toAST(n), toAST(e)]; },
   Stmt_varAssign:        function(n, _, e, _)                { return ["setVar", toAST(n), toAST(e)]; },
   Stmt_expr:             function(e, _)                      { return ["exprStmt", toAST(e)]; },
   VarDeclPart_init:      function(x, _, e)                   { return [toAST(x), toAST(e)]; },
   VarDeclPart_noInit:    function(x)                         { return [toAST(x), ["null"]]; },
-  WSendExpr_super:       function(_, ss, as)                 { return ["super",
+/*WSendExpr_super:       function(_, ss, as)                 { return ["super",
                                                                  toAST(ss).reduce(
                                                                    function(n, s) {
                                                                      return n +
                                                                        s.charAt(0).toUpperCase() +
-                                                                       s.slice(1); })].concat(toAST(as)); },
+                                                                       s.slice(1); })].concat(toAST(as)); },*/
   WSendExpr_send:       function(r, ss, as)                 { return ["send",
                                                                  toAST(r),
                                                                  toAST(ss).reduce(
@@ -62,19 +66,21 @@ var toAST = g.synthesizedAttribute({
   RelExpr_rel:           function(x, op, y)                  { return ["send", toAST(x), toAST(op), toAST(y)]; },
   AddExpr_add:           function(x, op, y)                  { return ["send", toAST(x), toAST(op), toAST(y)]; },
   MulExpr_mul:           function(x, op, y)                  { return ["send", toAST(x), toAST(op), toAST(y)]; },
-  DotExpr_super:         function(_, _, m, xs)               { return ["super", toAST(m)].concat(toAST(xs)); },
-  DotExpr_send:          function(r, _, m, xs)               { return ["send", toAST(r), toAST(m)].concat(toAST(xs)); },
-  DotExpr_instVarAccess: function(_, _, n)                   { return ["getInstVar", toAST(n)]; },
   UnExpr_pos:            function(_, x)                      { return ["send", toAST(x), "unaryPlus"]; },
   UnExpr_neg:            function(_, x)                      { return ["send", toAST(x), "unaryMinus"]; },
+  UnExpr_not1:           function(_, x)                      { return ["send", toAST(x), "not"]; },
+  UnExpr_not2:           function(_, x)                      { return ["send", toAST(x), "not"]; },
+/*DotExpr_super:         function(_, _, m, xs)               { return ["super", toAST(m)].concat(toAST(xs)); },*/
+  DotExpr_send:          function(r, _, m, xs)               { return ["send", toAST(r), toAST(m)].concat(toAST(xs)); },
+  DotExpr_instVarAccess: function(_, _, n)                   { return ["getInstVar", ["this"], toAST(n)]; },
   PriExpr_paren:         function(_, e, _)                   { return toAST(e); },
-  PriExpr_block:         function(_, fs, ss, optE, _)        { var ast = ["block", toAST(fs)];
+/*PriExpr_block:         function(_, fs, ss, optE, _)        { var ast = ["block", toAST(fs)];
                                                                var ss = toAST(ss);
                                                                if (toAST(optE)) {
                                                                  ss.push(["exprStmt", toAST(optE)]);
                                                                }
                                                                ast.push(ss);
-                                                               return ast; },
+                                                               return ast; },*/
   PriExpr_new:           function(_, c, xs)                  { return ["new", toAST(c)].concat(toAST(xs)); },
   PriExpr_str:           function(s)                         { return ["string", toAST(s)]; },
   PriExpr_ident:         function(n)                         { return ["getVar", toAST(n)]; },
@@ -115,8 +121,8 @@ var toAST = g.synthesizedAttribute({
 var O = new Interpreter(g, "Program", toAST);
 
 O.evalAST = function(ast) {
-  if (O.OO && O.OO.eval && O.OO.eval.evalAST) {
-    return O.OO.eval.evalAST(ast);
+  if (O.OO && O.OO.evalAST) {
+    return O.OO.evalAST(ast);
   } else {
     throw new Error("evalAST is not configured correctly");
   };
