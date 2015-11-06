@@ -286,7 +286,9 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
   type: "varDecls",
 
   constructChildren: function(parsedAsts) {
-    parsedAsts = _.flatten(parsedAsts);
+    parsedAsts = _.reduce(parsedAsts, function(unpackedArgs, arg) {
+      return unpackedArgs.concat(arg);
+    }, []);
     this.children = this.constructAsts(parsedAsts);
   },
 
