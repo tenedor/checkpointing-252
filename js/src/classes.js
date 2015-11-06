@@ -26,7 +26,13 @@ var jetForLiteralsFn = classes.jetForLiteralsFn = function(f) {
 
 
 var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
+  // add built-in methods to Object
   this.declareObjectMethods(classTable);
+
+  // declare abstract literal class
+  this.declareLiteralClass(classTable);
+
+  // declare literal classes
   this.declareNumberClass(classTable);
   this.declareStringClass(classTable);
   this.declareBooleanClass(classTable);
@@ -62,8 +68,13 @@ var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
 };
 
 
+var declareLiteralClass = classes.declareLiteralClass = function(classTable) {
+  classTable.declareClass("Literal", "Object", []);
+};
+
+
 var declareNumberClass = classes.declareNumberClass = function(classTable) {
-  classTable.declareClass("Number", "Object", []);
+  classTable.declareClass("Number", "Literal", []);
 
   classTable.declareJet("Number", "+", jetForLiteralsFn(function(a, b) {
     return a + b;
@@ -112,7 +123,7 @@ var declareNumberClass = classes.declareNumberClass = function(classTable) {
 
 
 var declareStringClass = classes.declareStringClass = function(classTable) {
-  classTable.declareClass("String", "Object", []);
+  classTable.declareClass("String", "Literal", []);
 
   classTable.declareJet("String", "+", jetForLiteralsFn(function(a, b) {
     return a + b;
@@ -126,7 +137,7 @@ var declareStringClass = classes.declareStringClass = function(classTable) {
 
 
 var declareBooleanClass = classes.declareBooleanClass = function(classTable) {
-  classTable.declareClass("Boolean", "Object", []);
+  classTable.declareClass("Boolean", "Literal", []);
 
   classTable.declareJet("Boolean", "isTruthy", jetForLiteralsFn(function(a) {
     return !!a;
@@ -147,7 +158,7 @@ var declareBooleanClass = classes.declareBooleanClass = function(classTable) {
 
 
 var declareNullClass = classes.declareNullClass = function(classTable) {
-  classTable.declareClass("Null", "Object", []);
+  classTable.declareClass("Null", "Literal", []);
 };
 
 })();
