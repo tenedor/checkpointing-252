@@ -114,7 +114,8 @@ _.extend(EvalManager.prototype, {
 
           // construct new send node - TODO: store node for checkpointing
           evaledArgs = [instance, method].concat(args);
-          astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs);
+          astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs,
+              this._astRegistry);
 
           // add new eval frame
           _state = {

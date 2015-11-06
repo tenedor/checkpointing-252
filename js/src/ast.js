@@ -390,9 +390,10 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
 
   customConstructor: function(options, parsedAst, registry) {
     // allow construction from pre-evaluated arguments
-    if (options.preEvaledArgs) {
+    if (options.preEvaledArgs && options.registry) {
       this._hasPreEvaledChildren = true;
       this.children = options.preEvaledArgs;
+      this._registry = options.registry;
       return;
     };
 
@@ -446,10 +447,11 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
   }
 });
 
-Send.nodeFromEvaledArgs = function(evaledArgs) {
+Send.nodeFromEvaledArgs = function(evaledArgs, registry) {
   var options = {
     custom: true,
-    preEvaledArgs: evaledArgs
+    preEvaledArgs: evaledArgs,
+    registry: registry
   };
   return new Send(options);
 };
