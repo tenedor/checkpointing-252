@@ -47,15 +47,17 @@ var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
 
   equalityJetGenerator = function(equality) {
     return function(receiver, jetArgs, heap) {
-      var aval = heap.valueAtAddress(receiver);
-      var bval = heap.valueAtAddress(jetArgs[0]);
+      var addr0 = receiver;
+      var addr1 = jetArgs[0];
+      var val0 = heap.valueAtAddress(addr0);
+      var val1 = heap.valueAtAddress(addr1);
       var isEqual, instance;
 
-      if (aval instanceof state.LiteralInstance &&
-          bval instanceof state.LiteralInstance) {
-        isEqual = (aval.literal === bval.literal);
+      if (val0 instanceof state.LiteralInstance &&
+          val1 instanceof state.LiteralInstance) {
+        isEqual = (val0.literal === val1.literal);
       } else {
-        isEqual = (a === b);
+        isEqual = (addr0 === addr1);
       }
 
       instance = new state.LiteralInstance(equality ? isEqual : !isEqual);
