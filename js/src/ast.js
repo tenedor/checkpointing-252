@@ -324,7 +324,7 @@ var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
 
   evalSelf: function(s, evaledArgs) {
     var instance = s.heap.valueAtAddress(evaledArgs[0]);
-    var instVarName = s.heap.valueAtAddress(evaledArgs[1]).literal;
+    var instVarName = evaledArgs[1];
     var addr = evaledArgs[2];
     instance.setInstVarToAddress(instVarName, addr);
     return ["done", undefined];
@@ -366,7 +366,7 @@ var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
 
   evalSelf: function(s, evaledArgs) {
     var instance = s.heap.valueAtAddress(evaledArgs[0]);
-    var instVarName = s.heap.valueAtAddress(evaledArgs[1]).literal;
+    var instVarName = evaledArgs[1];
     var addr = instance.addressOfInstVar(instVarName);
     return ["done", addr];
   }
