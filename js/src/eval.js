@@ -50,8 +50,10 @@ _.extend(EvalStack.prototype, {
 
 // EvalManager
 //   [none]
-var EvalManager = eval.EvalManager = function(astNode) {
+var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
   var stack, _state;
+
+  this._astRegistry = astRegistry;
 
   this.clock = new state.Clock();
   this.heap = new state.Heap(this.clock);

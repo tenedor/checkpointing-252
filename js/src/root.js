@@ -37,7 +37,7 @@ OO.evalAST = function(parsedAst) {
 
   var astRegistry = new Registry();
   var program = ast.construct(parsedAst, astRegistry);
-  var evalManager = new eval.EvalManager(program);
+  var evalManager = new eval.EvalManager(program, astRegistry);
   return evalManager.eval();
 };
 
