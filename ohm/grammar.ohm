@@ -50,8 +50,8 @@ O {
     = WSendExpr
 
   WSendExpr
-    = super  (ident EqExpr)+  -- super
-    | EqExpr (ident EqExpr)+  -- send
+    /* = super  (ident EqExpr)+  -- super */
+    = EqExpr (ident EqExpr)+  -- send
     | EqExpr
 
   EqExpr
@@ -86,14 +86,14 @@ O {
     | DotExpr
 
   DotExpr
-    = super   '.' ident Actuals  -- super
-    | DotExpr '.' ident Actuals  -- send
+    /* = super   '.' ident Actuals  -- super */
+    = DotExpr '.' ident Actuals  -- send
     | this    '.' ident  ~'('    -- instVarAccess
     | PriExpr
 
   PriExpr
     = '(' Expr ')'                  -- paren
-    | '{' BFormals Stmt* Expr? '}'  -- block
+    /* | '{' BFormals Stmt* Expr? '}'  -- block */
     | new className Actuals         -- new
     | string                        -- str
     | ident                         -- ident
@@ -143,7 +143,7 @@ O {
   nullK      = 'null' ~alnum
   or         = 'or' ~alnum
   return     = 'return' ~alnum
-  super      = 'super' ~alnum
+  /* super   = 'super' ~alnum */
   this       = 'this' ~alnum
   trueK      = 'true' ~alnum
   var        = 'var' ~alnum
@@ -156,9 +156,9 @@ O {
     = '/*' (~'*/' _)* '*/'          -- multiLine
     | '//' (~'\n' _)* ('\n' | end)  -- singleLine
 
-  keyword = class | def   | extends | falseK | if   | new
-          | not   | nullK | return  | super  | this | trueK
-          | var   | while | with
+  keyword = class | def   | extends | falseK | if    | new
+          | not   | nullK | return  | this   | trueK | var
+          | while | with  /* | super */
 
   tokens = (keyword | ident | comment | _)*
 }
