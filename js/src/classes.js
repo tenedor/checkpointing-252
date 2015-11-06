@@ -35,21 +35,26 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
 
 
 var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
-  classTable.declareJet("Object", "==", function(receiver, jetArgs, heap) {
-    var aval = heap.valueAtAddress(receiver);
-    var bval = heap.valueAtAddress(jetArgs[0]);
-    var isEqual, instance;
+  var equalityJetGenerator = function(equality) {
+    return function(receiver, jetArgs, heap) {
+      var aval = heap.valueAtAddress(receiver);
+      var bval = heap.valueAtAddress(jetArgs[0]);
+      var isEqual, instance;
 
-    if (aval instanceof state.LiteralInstance &&
-        bval instanceof state.LiteralInstance) {
-      isEqual = (aval.literal === bval.literal);
-    } else {
-      isEqual = (a === b);
-    }
+      if (aval instanceof state.LiteralInstance &&
+          bval instanceof state.LiteralInstance) {
+        isEqual = (aval.literal === bval.literal);
+      } else {
+        isEqual = (a === b);
+      }
 
-    instance = new state.LiteralInstance(isEqual);
-    return heap.storeValue(instance);
-  });
+      instance = new state.LiteralInstance(equality ? isEqual : !isEqual);
+      return heap.storeValue(instance);
+    };
+  };
+
+  classTable.declareJet("Object", "==", equalityJetGenerator(true));
+  classTable.declareJet("Object", "!=", equalityJetGenerator(false));
 
   classTable.declareJet("Object", "isTruthy", jetForLiteralsFn(function(a) {
     return true;
@@ -74,6 +79,10 @@ var declareNumberClass = classes.declareNumberClass = function(classTable) {
 
   classTable.declareJet("Number", "/", jetForLiteralsFn(function(a, b) {
     return a / b;
+  }));
+
+  classTable.declareJet("Number", "%", jetForLiteralsFn(function(a, b) {
+    return a % b;
   }));
 
   classTable.declareJet("Number", ">", jetForLiteralsFn(function(a, b) {
