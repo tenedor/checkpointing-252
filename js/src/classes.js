@@ -41,7 +41,11 @@ var declareBuiltIns = classes.declareBuiltIns = function(classTable) {
 
 
 var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
-  var equalityJetGenerator = function(equality) {
+  var equalityJetGenerator;
+
+  classTable.declareJet("Object", "instantiate", function(){});
+
+  equalityJetGenerator = function(equality) {
     return function(receiver, jetArgs, heap) {
       var aval = heap.valueAtAddress(receiver);
       var bval = heap.valueAtAddress(jetArgs[0]);
@@ -70,6 +74,11 @@ var declareObjectMethods = classes.declareObjectMethods = function(classTable) {
 
 var declareLiteralClass = classes.declareLiteralClass = function(classTable) {
   classTable.declareClass("Literal", "Object", []);
+
+  classTable.declareJet("Literal", "instantiate", function(){
+    util.assert(false,
+        "instantiating literal instances with the `new` keyword is forbidden");
+  });
 };
 
 
