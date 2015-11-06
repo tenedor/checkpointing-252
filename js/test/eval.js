@@ -36,31 +36,6 @@ tests(O,
           'def RefCell.get() = this.value;\n' +
           'new RefCell(3).get()',
     expected: 3
-  },
-  {
-    name: 'class decl + method decls + super send (1/3)',
-    code: 'class C;\n' +
-          'def Object.foo() = 1;\n' +
-          'def C.foo() = super.foo() + 41;\n' +
-          'new C().foo()',
-    expected: 42
-  },
-  {
-    name: 'method decls + super send (2/3)',
-    code: 'def Boolean.foo() = 1;\n' +
-          'def True.foo() = super.foo() + 41;\n' +
-          'true.foo()',
-    expected: 42
-  },
-  {
-    name: 'method decls + super send (3/3)',
-    code: 'class Point with x, y;\n' +
-          'def Point.initialize(x, y) { super.initialize(); this.x = x; this.y = y; }\n' +
-          'class ThreeDeePoint extends Point with z;\n' +
-          'def ThreeDeePoint.initialize(x, y, z) { super.initialize(x, y); this.z = z; }\n' +
-          'def ThreeDeePoint.m() = this.x * 100 + this.y * 10 + this.z;\n' +
-          'new ThreeDeePoint(1, 2, 3).m()',
-    expected: 123
   }
 );
 
