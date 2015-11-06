@@ -123,6 +123,14 @@ var declareNumberClass = classes.declareNumberClass = function(classTable) {
     return a <= b;
   }));
 
+  classTable.declareJet("Number", "unaryPlus", jetForLiteralsFn(function(a) {
+    return a;
+  }));
+
+  classTable.declareJet("Number", "unaryMinus", jetForLiteralsFn(function(a) {
+    return -a;
+  }));
+
   classTable.declareJet("Number", "isTruthy", jetForLiteralsFn(function(a) {
     return a !== 0;
   }));
