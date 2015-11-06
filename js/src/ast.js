@@ -215,7 +215,8 @@ var Return = ast.Return = ast.Nodes["return"] = Stmt.extend({
   type: "return",
 
   evalSelf: function(s, evaledArgs) {
-    return ["return", evaledArgs[0]];
+    var addr = evaledArgs[0];
+    return ["return", addr];
   }
 });
 
@@ -293,9 +294,11 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
   },
 
   evalSelf: function(s, evaledArgs) {
-    var i;
+    var i, varName, addr;
     for (i = 0; i + 1 < evaledArgs.length; i+=2) {
-      s.stack.declareVar(evaledArgs[i], evaledArgs[i + 1]);
+      varName = evaledArgs[i];
+      addr = evaledArgs[i + 1];
+      s.stack.declareVar(varName, addr);
     };
     return ["done", undefined];
   }
@@ -309,7 +312,9 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
   type: "setVar",
 
   evalSelf: function(s, evaledArgs) {
-    s.stack.setVarToAddr(evaledArgs[0], evaledArgs[1]);
+    var varName = evaledArgs[0];
+    var addr = evaledArgs[1];
+    s.stack.setVarToAddr(varName, addr);
     return ["done", undefined];
   }
 });
@@ -352,7 +357,8 @@ var GetVar = ast.GetVar = ast.Nodes["getVar"] = Expr.extend({
   type: "getVar",
 
   evalSelf: function(s, evaledArgs) {
-    var addr = s.stack.addrOfVar(evaledArgs[0]);
+    var varName = evaledArgs[0];
+    var addr = s.stack.addrOfVar(varName);
     return ["done", addr];
   }
 });
