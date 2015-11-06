@@ -76,17 +76,19 @@ O {
 
   MulExpr
     = MulExpr ('*' | '/' | '%') DotExpr  -- mul
+    | UnExpr
+
+  UnExpr
+    = '+' UnExpr  -- pos
+    | '-' UnExpr  -- neg
+    | '!' UnExpr  -- not1
+    | not UnExpr  -- not2
     | DotExpr
 
   DotExpr
     = super   '.' ident Actuals  -- super
     | DotExpr '.' ident Actuals  -- send
     | this    '.' ident  ~'('    -- instVarAccess
-    | UnExpr
-
-  UnExpr
-    = '+' PriExpr  -- pos
-    | '-' PriExpr  -- neg
     | PriExpr
 
   PriExpr
@@ -138,6 +140,7 @@ O {
   extends    = 'extends' ~alnum
   falseK     = 'false' ~alnum
   new        = 'new' ~alnum
+  not        = 'not' ~alnum
   nullK      = 'null' ~alnum
   or         = 'or' ~alnum
   return     = 'return' ~alnum

@@ -66,11 +66,13 @@ var toAST = g.synthesizedAttribute({
   RelExpr_rel:           function(x, op, y)                  { return ["send", toAST(x), toAST(op), toAST(y)]; },
   AddExpr_add:           function(x, op, y)                  { return ["send", toAST(x), toAST(op), toAST(y)]; },
   MulExpr_mul:           function(x, op, y)                  { return ["send", toAST(x), toAST(op), toAST(y)]; },
+  UnExpr_pos:            function(_, x)                      { return ["send", toAST(x), "unaryPlus"]; },
+  UnExpr_neg:            function(_, x)                      { return ["send", toAST(x), "unaryMinus"]; },
+  UnExpr_not1:           function(_, x)                      { return ["send", toAST(x), "not"]; },
+  UnExpr_not2:           function(_, x)                      { return ["send", toAST(x), "not"]; },
   DotExpr_super:         function(_, _, m, xs)               { return ["super", toAST(m)].concat(toAST(xs)); },
   DotExpr_send:          function(r, _, m, xs)               { return ["send", toAST(r), toAST(m)].concat(toAST(xs)); },
   DotExpr_instVarAccess: function(_, _, n)                   { return ["getInstVar", ["this"], toAST(n)]; },
-  UnExpr_pos:            function(_, x)                      { return ["send", toAST(x), "unaryPlus"]; },
-  UnExpr_neg:            function(_, x)                      { return ["send", toAST(x), "unaryMinus"]; },
   PriExpr_paren:         function(_, e, _)                   { return toAST(e); },
   PriExpr_block:         function(_, fs, ss, optE, _)        { var ast = ["block", toAST(fs)];
                                                                var ss = toAST(ss);
