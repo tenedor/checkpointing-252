@@ -129,16 +129,15 @@ O {
     | digit+             -- whole
 
   binSelector  -- a binary selector
-    = '===' | '==' | '!==' | '!=' | '<=' | '<' | '>=' | '>'
-    | '+'   | '-'  | '*'   | '/'  | '%'
+    = '==' | '!=' | '<=' | '<' | '>=' | '>'
+    | '+'  | '-'  | '*'  | '/' | '%'
 
   and        = 'and' ~alnum
   class      = 'class' ~alnum
-  if         = 'if' ~alnum
-  while      = 'while' ~alnum
   def        = 'def' ~alnum
   extends    = 'extends' ~alnum
   falseK     = 'false' ~alnum
+  if         = 'if' ~alnum
   new        = 'new' ~alnum
   not        = 'not' ~alnum
   nullK      = 'null' ~alnum
@@ -148,6 +147,7 @@ O {
   this       = 'this' ~alnum
   trueK      = 'true' ~alnum
   var        = 'var' ~alnum
+  while      = 'while' ~alnum
   with       = 'with' ~alnum
 
   space += comment
@@ -156,8 +156,9 @@ O {
     = '/*' (~'*/' _)* '*/'          -- multiLine
     | '//' (~'\n' _)* ('\n' | end)  -- singleLine
 
-  keyword = class | def  | extends | falseK | new  | nullK  | return
-          | super | this | trueK   | var    | with
+  keyword = and | class | def  | extends | falseK | if   | new
+          | not | nullK | or   | return  | super  | this | trueK
+          | var | while | with
 
   tokens = (keyword | ident | comment | _)*
 }
