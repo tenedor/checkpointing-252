@@ -215,7 +215,7 @@ _.extend(Instance.prototype, {
   },
 
   setInstVarToAddress: function(instVarName, addr) {
-    util.assert(this._instVars.hasOwnProperty(instVarNames));
+    util.assert(this._instVars.hasOwnProperty(instVarName));
     this._instVars[instVarName].setValueAtTime(addr, this._clock.time);
   }
 });
