@@ -26,14 +26,14 @@ O {
     | '{' Stmt* Expr? '}'  -- stmt
 
   If
-    = if '(' Expr ')' StmtBlock 'else' StmtBlock  -- binary
-    | if '(' Expr ')' StmtBlock                   -- unary
+    = if '(' Expr ')' Block 'else' Block  -- binary
+    | if '(' Expr ')' Block               -- unary
 
   While
-    = while '(' Expr ')' StmtBlock
+    = while '(' Expr ')' Block
 
-  StmtBlock
-    = '{' Stmt* '}'
+  Block
+    = '{' ProgramPart* '}'
 
   Stmt
     = var VarDeclPart (',' VarDeclPart)* ';'  -- varDecls

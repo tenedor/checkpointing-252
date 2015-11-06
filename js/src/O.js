@@ -39,7 +39,7 @@ var toAST = g.synthesizedAttribute({
   If_binary:             function(_, _, e, _, tb, _, fb)     { return ["if", toAST(e), toAST(tb), toAST(fb)]; },
   If_unary:              function(_, _, e, _, tb)            { return ["if", toAST(e), toAST(tb), ["seq"]]; },
   While:                 function(_, _, e, _, b)             { return ["while", toAST(e), toAST(b)]; },
-  StmtBlock:             function(_, b, _)                   { return ["seq"].concat(toAST(b)); },
+  Block:                 function(_, b, _)                   { return ["seq"].concat(toAST(b)); },
   Stmt_varDecls:         function(_, p, _, ps, _)            { return ["varDecls", toAST(p)].concat(toAST(ps)); },
   Stmt_return:           function(_, e, _)                   { return ["return", toAST(e)]; },
   Stmt_instVarAssign:    function(_, _, n, _, e, _)          { return ["setInstVar", ["this"], toAST(n), toAST(e)]; },
