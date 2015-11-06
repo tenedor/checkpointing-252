@@ -486,7 +486,7 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
     var addr = s.heap.storeValue(instance);
 
     evaledArgs.push(addr); // this is hacky - can we do better?
-    return ["send", addr, "instantiate", args, s.stack];
+    return ["send", addr, "initialize", args, s.stack];
   }
 });
 
