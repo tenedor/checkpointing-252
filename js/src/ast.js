@@ -236,7 +236,7 @@ var ClassDecl = ast.ClassDecl = ast.Nodes["classDecl"] = Stmt.extend({
   evalSelf: function(s, evaledArgs) {
     var className = evaledArgs[0];
     var superClassName = evaledArgs[1];
-    var instVarNAmes = evaledArgs[2];
+    var instVarNames = evaledArgs.slice(2);
     s.classTable.declareClass(className, superClassName, instVarNames);
     return ["done", undefined];
   }
