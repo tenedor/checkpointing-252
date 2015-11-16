@@ -31,13 +31,18 @@ _.extend(Registry.prototype, {
   }
 });
 
-OO.evalAST = function(parsedAst) {
+OO.programAndRegistry = function(parsedAst) {
   var ast = OO.ast;
   var eval = OO.eval;
 
   var astRegistry = new Registry();
   var program = ast.construct(parsedAst, astRegistry);
-  var evalManager = new eval.EvalManager(program, astRegistry);
+  return [program, astRegistry];
+};
+
+OO.evalAST = function(parsedAst) {
+  var pr = OO.programAndRegistry(parsedAst);
+  var evalManager = new eval.EvalManager(pr[0], pr[1]);
   return evalManager.eval();
 };
 
