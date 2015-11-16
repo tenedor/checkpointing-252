@@ -3,6 +3,7 @@
 var util = OO.util;
 var state = OO.state;
 var classes = OO.classes;
+var checkpoint = OO.ast;
 var ast = OO.ast;
 var root = OO.root;
 
@@ -83,9 +84,12 @@ _.extend(EvalManager.prototype, {
     // execute first instruction
     instruction = this.evalStack.eval();
 
+    var checkpoints = [];
+
     // eval loop
     while (!complete) {
       // take a checkpoint
+      // checkpoints = checkpoints + [new checkpoint.Checkpoint(this)];
 
       switch (instruction[0]) {
         case "skip":

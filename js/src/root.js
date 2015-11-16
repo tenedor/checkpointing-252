@@ -3,6 +3,9 @@
 // establish the root object: `window` in browser, `global` on server
 var root = this;
 
+
+
+
 // save the previous value of the `OO` variable
 var previousOO = root.OO;
 
@@ -12,7 +15,7 @@ OO.previousOO = previousOO;
 
 // tell the grammar about OO
 O.OO = OO;
-
+  
 
 // Registry - map uids to objects
 var Registry = function() {
@@ -33,8 +36,6 @@ _.extend(Registry.prototype, {
 
 OO.programAndRegistry = function(parsedAst) {
   var ast = OO.ast;
-  var eval = OO.eval;
-
   var astRegistry = new Registry();
   var program = ast.construct(parsedAst, astRegistry);
   return [program, astRegistry];
@@ -44,6 +45,7 @@ OO.programAndRegistry = function(parsedAst) {
 };
 
 OO.evalAST = function(parsedAst) {
+  var eval = OO.eval;
   var pr = OO.programAndRegistry(parsedAst);
   var evalManager = new eval.EvalManager(pr[0], pr[1]);
   return evalManager.eval();
