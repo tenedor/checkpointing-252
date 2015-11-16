@@ -85,6 +85,8 @@ _.extend(EvalManager.prototype, {
 
     // eval loop
     while (!complete) {
+      // take a checkpoint
+
       switch (instruction[0]) {
         case "skip":
           instruction = this.evalStack.eval();

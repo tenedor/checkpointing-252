@@ -38,6 +38,9 @@ OO.programAndRegistry = function(parsedAst) {
   var astRegistry = new Registry();
   var program = ast.construct(parsedAst, astRegistry);
   return [program, astRegistry];
+  // TODO more completely refactor the parsed AST, eval manager, etc. out
+  // playground formation should establish a globally shared set of things
+  // related to the program at hand (this is our evaluation framework for week 1)
 };
 
 OO.evalAST = function(parsedAst) {
