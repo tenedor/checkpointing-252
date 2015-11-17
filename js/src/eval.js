@@ -35,7 +35,11 @@ _.extend(EvalStack.prototype, {
     var packedData = [];
     var currentFrame = this;
     if (typeof currentFrame !== "undefined") {
-      packedData.push([this.astNode.id, this.state.stack._level, JSON.stringify(this.evaledArgs)]);
+      if (typeof this.astNode.id === "undefined") {
+        packedData.push([this.astNode, this.state.stack._level, JSON.stringify(this.evaledArgs)]);
+      } else {
+        packedData.push([this.astNode.id, this.state.stack._level, JSON.stringify(this.evaledArgs)]);
+      }
       currentFrame = currentFrame.parent;
     }
     return packedData;
@@ -55,7 +59,11 @@ _.extend(EvalStack.prototype, {
     var i;
     var currentFrame = this;
     for (i in packedData) {
-      currentFrame.astNode = this.astRegistry.objectForId(packedData[i][0]);
+      if (typeof packedData[i][0] === "number") {
+        currentFrame.astNode = this.astRegistry.objectForId(packedData[i][0]);
+      } else {
+        currentFrame.astNode = packedData[i][0];
+      }
       currentFrame.state = {
         heap: this.heap,
         stack: stacks[stacks.length-1 -packedData[i][1]],
@@ -149,8 +157,6 @@ _.extend(EvalManager.prototype, {
           evaledArgs = [instance, method].concat(args);
           astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs,
               this._astRegistry); // TODO this thing is in the eval stack borking all the checkpointing
-          console.log("send");
-          console.log(astNode);
 
           // add new eval frame
           _state = {
