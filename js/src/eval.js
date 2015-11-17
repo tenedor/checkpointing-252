@@ -91,6 +91,7 @@ _.extend(EvalManager.prototype, {
       // take a checkpoint
       checkpoints.push(this.checkpoint());
       this.resume(checkpoints[checkpoints.length-1]);
+      console.log(checkpoints[checkpoints.length-1]);
 
       switch (instruction[0]) {
         case "skip":
@@ -196,9 +197,9 @@ _.extend(EvalManager.prototype, {
     // each eval stack frame has to be checkpointed separately
     return {
       clock: this.clock.checkpoint(),
-      heap: this.heap.checkpoint()
+      heap: this.heap.checkpoint(),
+      stack: this.evalStack.state.stack.checkpoint()
       //classTable: this.classTable.checkpoint(),
-      // stack: this.evalStack.state.stack.checkpoint()
       //evalStack: this.evalStack.checkpoint()
     };
   },
@@ -206,9 +207,11 @@ _.extend(EvalManager.prototype, {
   resume: function(cp) {
     this.heap.resume(cp.heap);
     this.clock.resume(cp.clock);
-    // everyone must use the same clock
-    this.heap.clock = this.clock;
-    //this.stack.resume(cp.stack);
+    this.evalStack.state.stack.resume(cp.stack);
+    // everyone must use the same clock these aren't necessary?
+    //this.evalStack.state.stack.clock = this.clock;
+    //this.heap.clock = this.clock;
+
     //this.heap = JSON.parse(cp.heap);
     //_.extend(this.heap, OO.state.Heap.prototype);
     //var vv;

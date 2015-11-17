@@ -286,7 +286,8 @@ _.extend(Stack.prototype, {
       for (i in currentFrame._vars) {
         currentPackedVarsData[i] = currentFrame._vars[i].checkpoint();
       }
-      packedData.push([currentFrame.clock.checkpoint(), currentFrame._level, currentPackedVarsData]);
+      packedData.push([currentFrame._clock.checkpoint(), currentFrame._level, currentPackedVarsData]);
+      currentFrame = currentFrame._parent;
     }
     return packedData;
   },
@@ -301,7 +302,7 @@ _.extend(Stack.prototype, {
       currentVars = {};
       // reconstruct packed vars data
       for (j in packedData[i][2]) {
-        currentVars[j] = new VersionedValue(undefined, undefined);
+        currentVars[j] = new VersionedValue(null, null);
         currentVars[j].resume(packedData[i][2][j]);
       }
       currentFrame._vars = currentVars;
