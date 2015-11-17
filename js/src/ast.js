@@ -96,9 +96,6 @@ _.extend(Ast.prototype, {
     return ["done", undefined];
   },
 
-  checkpoint: function() {
-    return this.id;
-  }
 });
 
 Ast.extend = util.extendSelf;

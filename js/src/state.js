@@ -271,16 +271,12 @@ _.extend(Stack.prototype, {
     return new Stack(this._clock, this, this._level + 1);
   },
 
-  level: function() {
-    return this._level;
-  },
-
   checkpoint: function() {
     var currentFrame = this;
     var packedData = [];
     var currentPackedVarsData;
     var i;
-    if(typeof currentFrame !== "undefined") {
+    if (typeof currentFrame !== "undefined") {
       currentPackedVarsData = {};
       for (i in currentFrame._vars) {
         currentPackedVarsData[i] = currentFrame._vars[i].checkpoint();

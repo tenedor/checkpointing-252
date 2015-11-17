@@ -12,7 +12,8 @@ var eval = OO.eval = {};
 // EvalStack
 //   @clock clock
 //   @evalStack parent
-var EvalStack = eval.EvalStack = function(parent, astNode, state) {
+var EvalStack = eval.EvalStack = function(parent, astNode, state, globalRegistry) {
+  this.astRegistry = globalRegistry;
   this.parent = parent;
   this.astNode = astNode;
   this.state = state;
@@ -31,20 +32,43 @@ _.extend(EvalStack.prototype, {
   // return checkpointed version
   // we only need to store the level in the list of stacks we're at
   checkpoint: function() {
-    var thisCheckpoint = {
-      ast: this.astNode.checkpoint(),
-      stackLevel: this.state.stack.level(),
-      evaledArgsPacked: JSON.stringify(this.evaledArgs)
-    };
-    if (typeof this.parent !== "undefined") {
-      thisCheckpoint.parent = this.parent.checkpoint();
+    var packedData = [];
+    var currentFrame = this;
+    if (typeof currentFrame !== "undefined") {
+      packedData.push([this.astNode.id, this.state.stack._level, JSON.stringify(this.evaledArgs)]);
+      currentFrame = currentFrame.parent;
     }
-    return thisCheckpoint;
+    return packedData;
   },
 
-  unpack: function(packed) {
-    this.astNode = /* get ID */ undefined;
-    this.state = {}
+  resume: function(packedData) {
+    // always run from top level
+
+    // this.stack has a full stack.
+    var stacks = [];
+    var currentStackFrame = this.state.stack;
+    while (typeof currentStackFrame !== "undefined") {
+      stacks.push(currentStackFrame);
+      currentStackFrame = currentStackFrame._parent;
+    }
+
+    var i;
+    var currentFrame = this;
+    for (i in packedData) {
+      currentFrame.astNode = this.astRegistry.objectForId(packedData[i][0]);
+      currentFrame.state = {
+        heap: this.heap,
+        stack: stacks[stacks.length-1 -packedData[i][1]],
+        classTable: this.classTable
+      };
+      currentFrame.evaledArgs = JSON.parse(packedData[i][2]);
+      if (i != packedData.length - 1) {
+        currentFrame.parent = new EvalStack(undefined, undefined, undefined, this.astRegistry);
+        currentFrame = currentFrame.parent;
+      }
+    }
+
+   // console.log(this.state.stack);
   }
 });
 
@@ -69,7 +93,7 @@ var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
     stack: stack,
     classTable: this.classTable
   };
-  this.evalStack = new EvalStack(undefined, astNode, _state);
+  this.evalStack = new EvalStack(undefined, astNode, _state, this._astRegistry);
 };
 
 _.extend(EvalManager.prototype, {
@@ -89,9 +113,9 @@ _.extend(EvalManager.prototype, {
     // eval loop
     while (!complete) {
       // take a checkpoint
+  //    console.log(this.evalStack.state.stack);
       checkpoints.push(this.checkpoint());
       this.resume(checkpoints[checkpoints.length-1]);
-      console.log(checkpoints[checkpoints.length-1]);
 
       switch (instruction[0]) {
         case "skip":
@@ -100,6 +124,7 @@ _.extend(EvalManager.prototype, {
 
         case "eval":
           astNode = instruction[1];
+          console.log(astNode);
           stack = instruction[2];
 
           // add new eval frame
@@ -108,7 +133,7 @@ _.extend(EvalManager.prototype, {
             stack: stack,
             classTable: this.classTable
           };
-          this.evalStack = new EvalStack(this.evalStack, astNode, _state);
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state, this._astRegistry);
 
           // execute next instruction
           instruction = this.evalStack.eval();
@@ -123,7 +148,9 @@ _.extend(EvalManager.prototype, {
           // construct new send node - TODO: store node for checkpointing
           evaledArgs = [instance, method].concat(args);
           astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs,
-              this._astRegistry);
+              this._astRegistry); // TODO this thing is in the eval stack borking all the checkpointing
+          console.log("send");
+          console.log(astNode);
 
           // add new eval frame
           _state = {
@@ -131,7 +158,7 @@ _.extend(EvalManager.prototype, {
             stack: stack,
             classTable: this.classTable
           };
-          this.evalStack = new EvalStack(this.evalStack, astNode, _state);
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state, this._astRegistry);
 
           // execute next instruction
           instruction = this.evalStack.eval();
@@ -199,16 +226,29 @@ _.extend(EvalManager.prototype, {
       clock: this.clock.checkpoint(),
       heap: this.heap.checkpoint(),
       stack: this.evalStack.state.stack.checkpoint(),
-      classTable: this.classTable.checkpoint()
-      //evalStack: this.evalStack.checkpoint()
+      classTable: this.classTable.checkpoint(),
+      evalStack: this.evalStack.checkpoint()
     };
   },
 
   resume: function(cp) {
     this.heap.resume(cp.heap);
     this.clock.resume(cp.clock);
-    this.evalStack.state.stack.resume(cp.stack);
+    // we don't screw with the jets
     this.classTable.resume(cp.classTable);
+    this.evalStack.state.stack.resume(cp.stack);
+    var currentFrame = this.evalStack;
+    this.evalStack.resume(cp.evalStack);
+    //this.evalStack.state.heap = this.heap;
+    //this.evalStack.state.classTable = this.classTable;
+    var currentFrame = this.evalStack;
+    while (typeof currentFrame !== "undefined") {
+      currentFrame.state.heap = this.heap;
+      currentFrame.state.classTable = this.classTable;
+      currentFrame = currentFrame.parent;
+    }
+
+    // console.log(this.evalStack.state);
     // everyone must use the same clock these aren't necessary?
     //this.evalStack.state.stack.clock = this.clock;
     //this.heap.clock = this.clock;
