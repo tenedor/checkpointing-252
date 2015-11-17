@@ -26,6 +26,16 @@ _.extend(Clock.prototype, {
   // of an execution after going backwards in time
   oldestTimeSeen: function() {
     return Math.max(this._oldestTimeSaved, this.time);
+  },
+
+  checkpoint: function() {
+    return JSON.stringify(this);
+  },
+
+  resume: function(packedData) {
+    var unpackedData = JSON.parse(packedData);
+    this.time = unpackedData.time;
+    this._oldestTimeSaved = unpackedData._oldestTimeSaved;
   }
 });
 
@@ -34,8 +44,7 @@ _.extend(Clock.prototype, {
 //   @expr value
 //   @number time
 var VersionedValue = state.VersionedValue = function(value, time) {
-  var firstSnapshot = [time, value];
-  this._history = [firstSnapshot];
+  this._history = [[time, value]];
 };
 
 _.extend(VersionedValue.prototype, {
@@ -87,6 +96,74 @@ _.extend(VersionedValue.prototype, {
   // return undefined if no value existed
   valueAtTime: function(time) {
     return this.snapshotAtTime(time)[1];
+  },
+
+  checkpoint: function() {
+    var packedData = [];
+    var i, currentValueType, currentValueData;
+    for (i in this._history) {
+      // derp derp derp derp derp
+      // assume vv value is
+      // 1. an address (number)
+      // 2. an Instance
+      // 3. classdef (array where first element is string)
+      // 4. methoddef (array where first element is number)
+      // 5. literal instance (need to save literal too)
+      // 6. null (THIS IS REALLY BAD DESIGN, THERE SHOULD BE A BIG ERROR)
+      // derp derp derp derp derp
+      if(this._history[i][1] === null) {
+        currentValueType = "nullobj";
+        currentValueData = null;
+      }
+      else if(typeof this._history[i][1] === "number") {
+        currentValueType = "address";
+        currentValueData = this._history[i][1];
+      } else if (this._history[i][1].constructor === Array) {
+        if(typeof this._history[i][1][0] === "number") {
+          currentValueType = "methoddef";
+          currentValueData = JSON.stringify(this._history[i][1]);
+        } else {
+          currentValueType = "classdef";
+          currentValueData = JSON.stringify(this._history[i][1]);
+        }
+      } else {
+        currentValueType = "instance";
+        currentValueData = this._history[i][1].checkpoint();
+        if (this._history[i][1] instanceof LiteralInstance) {
+          currentValueData.literal = this._history[i][1].literal;
+        }
+      }
+      packedData.push([this._history[i][0], [currentValueType, currentValueData]]);
+    }
+    return packedData;
+  },
+
+  resume: function(packedData) {
+    this._history = [];
+    var i, currentValue;
+    for (i in packedData) {
+      // resumeNew must return a new of the same object
+      switch(packedData[i][1][0]) {
+        case "address":
+          currentValue = packedData[i][1][1];
+          break;
+        case "instance":
+          if (typeof packedData[i][1][1].literal !== "undefined") {
+            currentValue = new LiteralInstance(packedData[i][1][1].literal);
+          } else {
+            currentValue = new Instance(null, null, []);
+            currentValue.resume(packedData[i][1][1]);
+          }
+          break;
+        case "nullobj":
+          currentValue = null;
+          break;
+        default: // method / class def
+          currentValue = JSON.parse(packedData[i][1][1]);
+          break;
+      }
+      this._history.push([packedData[i][0], currentValue]);
+    }
   }
 });
 
@@ -121,12 +198,23 @@ _.extend(Heap.prototype, {
   },
 
   checkpoint: function() {
-    return JSON.stringify(this);
+    var packedStoreData = {};
+    var i;
+    for (i in this._store) {
+      packedStoreData[i] = this._store[i].checkpoint();
+    }
+    return [this._clock.checkpoint(), this._nextAddress, packedStoreData];
   },
 
-  resume: function(fromJSON) {
-    this._clock = fromJSON._clock;
-
+  resume: function(packedData) {
+    this._clock.resume(packedData[0]);
+    this._nextAddress = packedData[1];
+    this._store = {};
+    var i;
+    for (i in packedData[2]) {
+      this._store[i] = new VersionedValue(undefined, undefined);
+      this._store[i].resume(packedData[2][i]);
+    }
   }
 });
 
@@ -189,14 +277,40 @@ _.extend(Stack.prototype, {
   },
 
   checkpoint: function() {
-    //var thisCheckpoint = {
-    //  contents: JSON.stringify(this)
-    //};
-    //if (typeof this.parent !== "undefined") {
-    //  thisCheckpoint.parent = this.parent.checkpoint();
-    //}
-    //return thisCheckpoint;
-    return JSON.stringify(this);
+    var currentFrame = this;
+    var packedData = [];
+    var currentPackedVarsData;
+    var i;
+    if(typeof currentFrame !== "undefined") {
+      currentPackedVarsData = {};
+      for (i in currentFrame._vars) {
+        currentPackedVarsData[i] = currentFrame._vars[i].checkpoint();
+      }
+      packedData.push([currentFrame.clock.checkpoint(), currentFrame._level, currentPackedVarsData]);
+    }
+    return packedData;
+  },
+
+  resume: function(packedData) {
+    var currentFrame = this;
+    var currentClock, currentVars, currentParent;
+    var i, j;
+    for (i in packedData) {
+      currentFrame._clock.resume(packedData[i][0]);
+      currentFrame._level = packedData[i][1];
+      currentVars = {};
+      // reconstruct packed vars data
+      for (j in packedData[i][2]) {
+        currentVars[j] = new VersionedValue(undefined, undefined);
+        currentVars[j].resume(packedData[i][2][j]);
+      }
+      currentFrame._vars = currentVars;
+      // make a new parent if not at the end
+      if(i != packedData.length - 1) {
+        currentFrame._parent = new Stack(new Clock(), undefined, undefined);
+        currentFrame = currentFrame._parent;
+      }
+    }
   }
 });
 
@@ -222,6 +336,35 @@ _.extend(Instance.prototype, {
   setInstVarToAddress: function(instVarName, addr) {
     util.assert(this._instVars.hasOwnProperty(instVarName));
     this._instVars[instVarName].setValueAtTime(addr, this._clock.time);
+  },
+
+  checkpoint: function() {
+    var packedVars = {};
+    var i;
+    for (i in this._instVars) {
+      packedVars[i] = this._instVars[i].checkpoint();
+    }
+    var clockCheckpoint = null;
+    if (this._clock !== null) {
+      clockCheckpoint = this._clock.checkpoint();
+    }
+    return [clockCheckpoint, this._className, packedVars];
+  },
+
+  resume: function(packedData) {
+    if (packedData[0] === null) {
+      this._clock = null;
+    } else {
+      this._clock = new Clock();
+      this._clock.resume(packedData[0]);
+    }
+    this._className = packedData[1];
+    this._instVars = {};
+    var i;
+    for (i in packedData[2]) {
+      this._instVars[i] = new VersionedValue(undefined, undefined);
+      this._instVars[i].resume(packedData[2][i]);
+    }
   }
 });
 
@@ -410,6 +553,10 @@ _.extend(ClassTable.prototype, {
 
   checkpoint: function() {
     return JSON.stringify(this);
+  },
+
+  resume: function(checkpoint) {
+
   }
 });
 

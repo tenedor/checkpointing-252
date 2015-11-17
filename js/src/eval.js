@@ -89,9 +89,8 @@ _.extend(EvalManager.prototype, {
     // eval loop
     while (!complete) {
       // take a checkpoint
-      //checkpoints.push(this.checkpoint());
-      //console.log(checkpoints[checkpoints.length-1]);
-      //this.resume(checkpoints[checkpoints.length-1]);
+      checkpoints.push(this.checkpoint());
+      this.resume(checkpoints[checkpoints.length-1]);
 
       switch (instruction[0]) {
         case "skip":
@@ -196,63 +195,69 @@ _.extend(EvalManager.prototype, {
     // the heap and class table can be stored once.
     // each eval stack frame has to be checkpointed separately
     return {
-      heap: this.heap.checkpoint(),
-      classTable: this.classTable.checkpoint(),
-      stack: this.evalStack.state.stack.checkpoint(),
-      evalStack: this.evalStack.checkpoint()
+      clock: this.clock.checkpoint(),
+      heap: this.heap.checkpoint()
+      //classTable: this.classTable.checkpoint(),
+      // stack: this.evalStack.state.stack.checkpoint()
+      //evalStack: this.evalStack.checkpoint()
     };
   },
 
   resume: function(cp) {
-    this.heap = JSON.parse(cp.heap);
-    _.extend(this.heap, OO.state.Heap.prototype);
-    var vv;
-    for(vv in this.heap._store) {
-      _.extend(this.heap._store[vv], OO.state.VersionedValue.prototype);
-      for(xx in vv._history) {
-        vv._history[xx][1].restoreFunctionality();
-      }
-    }
-    _.extend(this.heap._clock, OO.state.Clock.prototype);
-    this.clock = this.heap._clock;
-    this.classTable = JSON.parse(cp.classTable);
-    _.extend(this.classTable, OO.state.ClassTable.prototype);
-    this.stack = JSON.parse(cp.stack);
-    _.extend(this.stack, OO.state.Stack.prototype);
-
-    // build a list of the stack frames to index into
-    var stackList = [];
-    var currentFrame = this.stack;
-    while (typeof currentFrame !== "undefined") {
-      stackList.push(currentFrame);
-      _.extend(currentFrame, OO.state.Stack.prototype);
-      currentFrame = currentFrame.parent;
-    }
-
-    // reconstruct eval frames
-    var newestFrame, prevFrame, firstFrame;
-    currentFrame = cp.evalStack;
-    while(typeof currentFrame !== "undefined") {
-      _.extend(currentFrame, EvalStack.prototype);
-      currentState = {
-        heap: this.heap,
-        stack: stackList[currentFrame.stackLevel],
-        classTable: this.classTable
-      };
-      newestFrame = new EvalStack(undefined,
-          this.evalStack.astNode._registry.objectForId(currentFrame.ast),
-          currentState);
-      newestFrame.evaledArgs = JSON.parse(currentFrame.evaledArgsPacked);
-      if(typeof prevFrame !== "undefined") {
-        prevFrame.parent = newestFrame;
-      } else {
-        firstFrame = newestFrame;
-      }
-      prevFrame = newestFrame;
-      currentFrame = currentFrame.parent;
-    }
-
-    this.evalStack = firstFrame;
+    this.heap.resume(cp.heap);
+    this.clock.resume(cp.clock);
+    // everyone must use the same clock
+    this.heap.clock = this.clock;
+    //this.stack.resume(cp.stack);
+    //this.heap = JSON.parse(cp.heap);
+    //_.extend(this.heap, OO.state.Heap.prototype);
+    //var vv;
+    //for(vv in this.heap._store) {
+    //  _.extend(this.heap._store[vv], OO.state.VersionedValue.prototype);
+    //  for(xx in vv._history) {
+    //    vv._history[xx][1].restoreFunctionality();
+    //  }
+    //}
+    //_.extend(this.heap._clock, OO.state.Clock.prototype);
+    //this.clock = this.heap._clock;
+    //this.classTable = JSON.parse(cp.classTable);
+    //_.extend(this.classTable, OO.state.ClassTable.prototype);
+    //this.stack = JSON.parse(cp.stack);
+    //_.extend(this.stack, OO.state.Stack.prototype);
+    //
+    //// build a list of the stack frames to index into
+    //var stackList = [];
+    //var currentFrame = this.stack;
+    //while (typeof currentFrame !== "undefined") {
+    //  stackList.push(currentFrame);
+    //  _.extend(currentFrame, OO.state.Stack.prototype);
+    //  currentFrame = currentFrame.parent;
+    //}
+    //
+    //// reconstruct eval frames
+    //var newestFrame, prevFrame, firstFrame;
+    //currentFrame = cp.evalStack;
+    //while(typeof currentFrame !== "undefined") {
+    //  _.extend(currentFrame, EvalStack.prototype);
+    //  currentState = {
+    //    heap: this.heap,
+    //    stack: stackList[currentFrame.stackLevel],
+    //    classTable: this.classTable
+    //  };
+    //  newestFrame = new EvalStack(undefined,
+    //      this.evalStack.astNode._registry.objectForId(currentFrame.ast),
+    //      currentState);
+    //  newestFrame.evaledArgs = JSON.parse(currentFrame.evaledArgsPacked);
+    //  if(typeof prevFrame !== "undefined") {
+    //    prevFrame.parent = newestFrame;
+    //  } else {
+    //    firstFrame = newestFrame;
+    //  }
+    //  prevFrame = newestFrame;
+    //  currentFrame = currentFrame.parent;
+    //}
+    //
+    //this.evalStack = firstFrame;
   }
 });
 
