@@ -97,7 +97,7 @@ _.extend(Ast.prototype, {
   },
 
   checkpoint: function() {
-    return id;
+    return this.id;
   }
 });
 

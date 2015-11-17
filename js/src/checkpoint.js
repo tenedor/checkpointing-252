@@ -18,8 +18,9 @@ _.extend(Checkpoint.prototype, {
 // the parsedAst is needed here because of a generally defective design
 // (this is not checkpoint's fault)
   programState: function(parsedAst) {
+    var eval = OO.eval;
     var pr = root.programAndRegistry(parsedAst);
-    var programState = new eval.evalManager(pr[0], pr[1]);
+    var programState = new eval.EvalManager(pr[0], pr[1]);
     programState.resume(this);
     return programState;
   },

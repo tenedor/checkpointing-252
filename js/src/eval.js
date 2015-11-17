@@ -3,7 +3,7 @@
 var util = OO.util;
 var state = OO.state;
 var classes = OO.classes;
-var checkpoint = OO.ast;
+var checkpoint = OO.checkpoint;
 var ast = OO.ast;
 var root = OO.root;
 
@@ -37,7 +37,7 @@ _.extend(EvalStack.prototype, {
       evaledArgsPacked: JSON.stringify(this.evaledArgs)
     };
     if (typeof this.parent !== "undefined") {
-      thisCheckpoint.parent(this.parent.checkpoint());
+      thisCheckpoint.parent = this.parent.checkpoint();
     }
     return thisCheckpoint;
   },
@@ -89,7 +89,9 @@ _.extend(EvalManager.prototype, {
     // eval loop
     while (!complete) {
       // take a checkpoint
-      // checkpoints = checkpoints + [new checkpoint.Checkpoint(this)];
+      //checkpoints.push(this.checkpoint());
+      //console.log(checkpoints[checkpoints.length-1]);
+      //this.resume(checkpoints[checkpoints.length-1]);
 
       switch (instruction[0]) {
         case "skip":
@@ -196,36 +198,49 @@ _.extend(EvalManager.prototype, {
     return {
       heap: this.heap.checkpoint(),
       classTable: this.classTable.checkpoint(),
-      stack: this.stack.checkpoint(),
+      stack: this.evalStack.state.stack.checkpoint(),
       evalStack: this.evalStack.checkpoint()
     };
   },
 
-  resume: function(checkpoint) {
-    this.heap = JSON.parse(checkpoint.heap);
-    this.clock = this.heap.clock;
-    this.classTable = JSON.parse(checkpoint.classTable);
-    this.stack = JSON.parse(checkpoint.stack);
+  resume: function(cp) {
+    this.heap = JSON.parse(cp.heap);
+    _.extend(this.heap, OO.state.Heap.prototype);
+    var vv;
+    for(vv in this.heap._store) {
+      _.extend(this.heap._store[vv], OO.state.VersionedValue.prototype);
+      for(xx in vv._history) {
+        vv._history[xx][1].restoreFunctionality();
+      }
+    }
+    _.extend(this.heap._clock, OO.state.Clock.prototype);
+    this.clock = this.heap._clock;
+    this.classTable = JSON.parse(cp.classTable);
+    _.extend(this.classTable, OO.state.ClassTable.prototype);
+    this.stack = JSON.parse(cp.stack);
+    _.extend(this.stack, OO.state.Stack.prototype);
 
     // build a list of the stack frames to index into
     var stackList = [];
     var currentFrame = this.stack;
     while (typeof currentFrame !== "undefined") {
-      stackList.append(currentFrame);
+      stackList.push(currentFrame);
+      _.extend(currentFrame, OO.state.Stack.prototype);
       currentFrame = currentFrame.parent;
     }
 
     // reconstruct eval frames
     var newestFrame, prevFrame, firstFrame;
-    currentFrame = checkpoint.evalStack;
+    currentFrame = cp.evalStack;
     while(typeof currentFrame !== "undefined") {
+      _.extend(currentFrame, EvalStack.prototype);
       currentState = {
         heap: this.heap,
-        stack: stackList[frame.stackLevel],
+        stack: stackList[currentFrame.stackLevel],
         classTable: this.classTable
       };
       newestFrame = new EvalStack(undefined,
-          this.evalStack.astNode._registry.objectForId(frame.ast),
+          this.evalStack.astNode._registry.objectForId(currentFrame.ast),
           currentState);
       newestFrame.evaledArgs = JSON.parse(currentFrame.evaledArgsPacked);
       if(typeof prevFrame !== "undefined") {

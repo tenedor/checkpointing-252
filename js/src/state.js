@@ -122,6 +122,11 @@ _.extend(Heap.prototype, {
 
   checkpoint: function() {
     return JSON.stringify(this);
+  },
+
+  resume: function(fromJSON) {
+    this._clock = fromJSON._clock;
+
   }
 });
 
