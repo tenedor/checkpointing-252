@@ -198,8 +198,8 @@ _.extend(EvalManager.prototype, {
     return {
       clock: this.clock.checkpoint(),
       heap: this.heap.checkpoint(),
-      stack: this.evalStack.state.stack.checkpoint()
-      //classTable: this.classTable.checkpoint(),
+      stack: this.evalStack.state.stack.checkpoint(),
+      classTable: this.classTable.checkpoint()
       //evalStack: this.evalStack.checkpoint()
     };
   },
@@ -208,6 +208,7 @@ _.extend(EvalManager.prototype, {
     this.heap.resume(cp.heap);
     this.clock.resume(cp.clock);
     this.evalStack.state.stack.resume(cp.stack);
+    this.classTable.resume(cp.classTable);
     // everyone must use the same clock these aren't necessary?
     //this.evalStack.state.stack.clock = this.clock;
     //this.heap.clock = this.clock;

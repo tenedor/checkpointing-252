@@ -142,7 +142,6 @@ _.extend(VersionedValue.prototype, {
     this._history = [];
     var i, currentValue;
     for (i in packedData) {
-      // resumeNew must return a new of the same object
       switch(packedData[i][1][0]) {
         case "address":
           currentValue = packedData[i][1][1];
@@ -553,11 +552,39 @@ _.extend(ClassTable.prototype, {
   },
 
   checkpoint: function() {
-    return JSON.stringify(this);
+    var packedClasses = {};
+    var i;
+    for (i in this._classes) {
+      packedClasses[i] = this._classes[i].checkpoint();
+    }
+    var packedMethods = {};
+    var j;
+    for (i in this._methodTables) {
+      packedMethods[i] = {};
+      for (j in this._methodTables[i]) {
+        packedMethods[i][j] = this._methodTables[i][j].checkpoint();
+      }
+    }
+    return [this._clock.checkpoint(), packedClasses, packedMethods];
   },
 
-  resume: function(checkpoint) {
-
+  resume: function(packedData) {
+    this._clock.resume(packedData[0]);
+    this._classes = {};
+    var i;
+    for (i in packedData[1]) {
+      this._classes[i] = new VersionedValue(null, null);
+      this._classes[i].resume(packedData[1][i]);
+    }
+    this._methodTables = {};
+    var j;
+    for (i in packedData[2]) {
+      this._methodTables[i] = {};
+      for (j in packedData[2][i]) {
+        this._methodTables[i][j] = new VersionedValue(null, null);
+        this._methodTables[i][j].resume(packedData[2][i][j]);
+      }
+    }
   }
 });
 
