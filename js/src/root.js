@@ -34,6 +34,13 @@ _.extend(Registry.prototype, {
   }
 });
 
+OO.io = [];
+OO.io.setCheckpointIDs = function(checkpointIDs, i) {
+  var pr = OO.io[i].pr;
+  OO.io[i].checkpointIDs = checkpointIDs;
+  OO.evalProgramAndRegistryWithCheckpoints(pr, checkpointIDs);
+};
+
 OO.programAndRegistry = function(parsedAst) {
   var ast = OO.ast;
   var astRegistry = new Registry();
@@ -45,10 +52,31 @@ OO.programAndRegistry = function(parsedAst) {
 };
 
 OO.evalAST = function(parsedAst) {
-  var eval = OO.eval;
   var pr = OO.programAndRegistry(parsedAst);
+
+  var cg = new OO.constraints.ConstraintGenerator();
+  var constraints = cg.constraintsForProgram(pr[0]);
+
+  var i = OO.io.length;
+  OO.io[i] = {
+    constraints: constraints,
+    checkpointIDs: undefined,
+    pr: pr
+  };
+
+  return OO.evalProgramAndRegistry(pr);
+};
+
+OO.evalProgramAndRegistry = function(pr) {
+  var eval = OO.eval;
   var evalManager = new eval.EvalManager(pr[0], pr[1]);
   return evalManager.eval();
+};
+
+OO.evalProgramAndRegistryWithCheckpoints = function(pr, checkpointIDs) {
+  var eval = OO.eval;
+  var evalManager = new eval.EvalManager(pr[0], pr[1]);
+  return evalManager.evalWithCheckpoints(checkpointIDs);
 };
 
 })();
