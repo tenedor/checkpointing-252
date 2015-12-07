@@ -11,7 +11,7 @@ var constraints = OO.constraints = {};
    c = Program
      | Sequence
      | If
-     | While    -- tentatively
+     | While
      | Return
      | Var Declaration
      | Set Variable
@@ -40,7 +40,9 @@ var constraints = OO.constraints = {};
  Constraint Vocabulary
 
    // literals
-   p = astNode.id  // %p
+   D = nonNegInt   // %D
+   s = "" | %s_%D  // %s
+   p = %D%s        // %p
    x = varName     // %x
    d = 0 | 65536   // %d
 
@@ -107,6 +109,8 @@ var ConstraintGenerator = constraints.ConstraintGenerator = function() {
   this.constraints = [];
   this.nStep = 65536; // 2^16
   this.xStep = 65536; // 2^16
+  this.loopUnrollLength = 10;
+  this.suffixDelimiter = "_";
 };
 
 _.extend(ConstraintGenerator.prototype, {
@@ -119,7 +123,7 @@ _.extend(ConstraintGenerator.prototype, {
     };
 
     this.constraints = [];
-    this["program"](program);
+    this["program"](program, "");
 
     return this.constraints.join("&");
   },
@@ -183,36 +187,36 @@ _.extend(ConstraintGenerator.prototype, {
     return ["(" + constraints1.join("&") + "|" + constraints2.join("&") + ")"];
   },
 
-  program: function(c) {
-    var p = c.id;
+  program: function(c, s) {
+    var p = c.id + s;
     var c1;
 
     var S = ["n"+p+"=0", "k"+p+"=0"].concat(this.bAtPEqualsZero(p));
     this.constraints = this.constraints.concat(S);
 
     c1 = c.children[0];
-    this[c1.type](c1, p);
+    this[c1.type](c1, p, s);
   },
 
-  seq: function(c, _p) {
+  seq: function(c, _p, s) {
     var i = c.children.length;
     var c1;
 
     while (i > 0) {
       i--;
       c1 = c.children[i];
-      _p = this[c1.type](c1, _p);
+      _p = this[c1.type](c1, _p, s);
     };
 
     return _p;
   },
 
-  if: function(c, _p) {
-    var p = c.id;
+  if: function(c, _p, s) {
+    var p = c.id + s;
     var c2 = c.children[2];
     var c1 = c.children[1];
-    var p2 = this[c1.type](c2, _p);
-    var p1 = this[c1.type](c1, _p);
+    var p2 = this[c1.type](c2, _p, s);
+    var p1 = this[c1.type](c1, _p, s);
 
     var navg = "(n"+p1+"+n"+p2+")/2";
     var kavg = "(k"+p1+"+k"+p2+")/2";
@@ -230,12 +234,20 @@ _.extend(ConstraintGenerator.prototype, {
   },
 
   // TODO
-  while: function(c, _p) {
-    throw Error("TODO - while loop checkpoint analysis");
+  while: function(c, _p, s) {
+    var c1 = c.children[1];
+    var i = this.loopUnrollLength;
+
+    while (i > 0) {
+      i--;
+      _p = this[c1.type](c1, _p, s + this.suffixDelimiter + i);
+    };
+
+    return _p;
   },
 
-  return: function(c, _p) {
-    var p = c.id;
+  return: function(c, _p, s) {
+    var p = c.id + s;
     var S = ["n"+p+"=0", "k"+p+"=0"].concat(this.bAtPEqualsZero(p));
 
     this.constraints = this.constraints.concat(S);
@@ -243,8 +255,8 @@ _.extend(ConstraintGenerator.prototype, {
     return p;
   },
 
-  varDecls: function(c, _p) {
-    var p = c.id;
+  varDecls: function(c, _p, s) {
+    var p = c.id + s;
     var xs = _.filter(c.children, function(_, i) {return i % 2 === 0;});
 
     var Sk = ["k"+p+"=k"+_p+"+"+this.bSizeAtP(_p)];
@@ -258,8 +270,8 @@ _.extend(ConstraintGenerator.prototype, {
     return p;
   },
 
-  setVar: function(c, _p) {
-    var p = c.id;
+  setVar: function(c, _p, s) {
+    var p = c.id + s;
     var x = c.children[0];
 
     var Sk = ["k"+p+"=k"+_p+"+"+this.bSizeAtP(_p)];
@@ -275,8 +287,8 @@ _.extend(ConstraintGenerator.prototype, {
 
   // it will never be favorable to checkpoint on an exprStmt, you'd always just
   // checkpoint later, so don't give the option of checkpointing here
-  exprStmt: function(c, _p) {
-    var p = c.id;
+  exprStmt: function(c, _p, s) {
+    var p = c.id + s;
 
     var Sk = ["k"+p+"=k"+_p+"+"+this.bSizeAtP(_p)];
     var Sncp = ["!cp"+p, "n"+p+"=n"+_p].concat(this.bAtPEqualsBAtP1(p, _p));
