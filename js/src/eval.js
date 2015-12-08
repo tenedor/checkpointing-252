@@ -9,6 +9,8 @@ var root = OO.root;
 
 var eval = OO.eval = {};
 
+var checkpoints = [];
+
 // EvalStack
 //   @clock clock
 //   @evalStack parent
@@ -116,14 +118,15 @@ _.extend(EvalManager.prototype, {
     // execute first instruction
     instruction = this.evalStack.eval();
 
-    var checkpoints = [];
-
     // eval loop
     while (!complete) {
       // take a checkpoint
   //    console.log(this.evalStack.state.stack);
-      checkpoints.push(this.checkpoint());
-      this.resume(checkpoints[checkpoints.length-1]);
+      // this.evalstack.astnode.id
+      if(typeof this.evalStack.astNode.takeCheckpoint !== undefined)
+        checkpoints.push(this.checkpoint());
+
+      // this.resume(checkpoints[checkpoints.length-1]);
 
       switch (instruction[0]) {
         case "skip":
@@ -307,6 +310,13 @@ _.extend(EvalManager.prototype, {
     //}
     //
     //this.evalStack = firstFrame;
+  },
+
+  markNodes: function(listOfNodes) {
+    var listOfNodeIds = listOfNodes.split(",");
+    for(i in listOfNodeIds) {
+      this.evalStack.astNode._registry.objectForId(Number(listOfNodeIds[i])).takeCheckpoint = null;
+    }
   }
 });
 

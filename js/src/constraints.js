@@ -256,6 +256,7 @@ _.extend(ConstraintGenerator.prototype, {
   },
 
   varDecls: function(c, _p, s) {
+
     var p = c.id + s;
     var xs = _.filter(c.children, function(_, i) {return i % 2 === 0;});
 
@@ -266,6 +267,7 @@ _.extend(ConstraintGenerator.prototype, {
         this.bAtPEqualsBAtP1SetXs(p, _p, xs));
 
     this.constraints = this.constraints.concat(Sk, this.or(Scp, Sncp));
+    console.log("constraints: " + this.constraints);
 
     return p;
   },
