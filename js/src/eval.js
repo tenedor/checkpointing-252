@@ -9,22 +9,21 @@ var root = OO.root;
 
 var eval = OO.eval = {};
 
-var checkpoints = [];
-
 // EvalStack
 //   @clock clock
 //   @evalStack parent
-var EvalStack = eval.EvalStack = function(parent, astNode, state, globalRegistry) {
+var EvalStack = eval.EvalStack = function(parent, astNode, state, globalRegistry, currentEvalManager) {
   this.astRegistry = globalRegistry;
   this.parent = parent;
   this.astNode = astNode;
   this.state = state;
   this.evaledArgs = [];
+  this.evalManager = currentEvalManager;
 };
 
 _.extend(EvalStack.prototype, {
-  eval: function() {
-    return this.astNode.eval(this.state, this.evaledArgs);
+  eval: function(evalManager) {
+    return this.astNode.eval(this.state, this.evaledArgs, this.evalManager);
   },
 
   updateArgs: function(evaledArg) {
@@ -73,7 +72,7 @@ _.extend(EvalStack.prototype, {
       };
       currentFrame.evaledArgs = JSON.parse(packedData[i][2]);
       if (i != packedData.length - 1) {
-        currentFrame.parent = new EvalStack(undefined, undefined, undefined, this.astRegistry);
+        currentFrame.parent = new EvalStack(undefined, undefined, undefined, this.astRegistry, this.evalManager);
         currentFrame = currentFrame.parent;
       }
     }
@@ -94,6 +93,8 @@ var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
   this.heap = new state.Heap(this.clock);
   this.classTable = new state.ClassTable(this.clock);
 
+  this.checkpoints = [];
+
   classes.declareBuiltIns(this.classTable);
 
   // base eval frame
@@ -103,7 +104,7 @@ var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
     stack: stack,
     classTable: this.classTable
   };
-  this.evalStack = new EvalStack(undefined, astNode, _state, this._astRegistry);
+  this.evalStack = new EvalStack(undefined, astNode, _state, this._astRegistry, this);
 };
 
 _.extend(EvalManager.prototype, {
@@ -118,17 +119,38 @@ _.extend(EvalManager.prototype, {
     // execute first instruction
     instruction = this.evalStack.eval();
 
+    //this.checkpoints.push(this.checkpoint());
+
+    this.checkpoints.push(this.checkpoint());
     // eval loop
     while (!complete) {
+
+
+      //if (this.checkpoints.length > 0) {
+      //  console.log("lc last cp at t = " + this.checkpoints[this.checkpoints.length - 1].globalTime
+      //      + " : " + this.checkpoints[this.checkpoints.length - 1].lc);
+      //  console.log(this.checkpoints[this.checkpoints.length - 1].lc);
+      //}
+      //
+      //console.log(this.clock.time);
+      //if (this.clock.time % 2 === 0) {
+      //}
       // take a checkpoint
   //    console.log(this.evalStack.state.stack);
       // this.evalstack.astnode.id
       // TODO: optimize?
-      if (checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) {
-          checkpoints.push(this.checkpoint());
-      }
+      //if (checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) {
+      //    checkpoints.push(this.checkpoint());
+      //}
       // this.resume(checkpoints[checkpoints.length-1]);
-
+      // eval query
+      //var tempQueryCp;
+      //if (typeof currentQueryAst !== "undefined") {
+      //  tempQueryCp = this.checkpoint();
+      //  this.evalStack = new EvalStack(this.evalStack, eval.currentQueryAst, _state, this._astRegistry);
+      //
+      //  this.resume(tempQueryCp);
+      //}
       switch (instruction[0]) {
         case "skip":
           instruction = this.evalStack.eval();
@@ -144,7 +166,7 @@ _.extend(EvalManager.prototype, {
             stack: stack,
             classTable: this.classTable
           };
-          this.evalStack = new EvalStack(this.evalStack, astNode, _state, this._astRegistry);
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state, this._astRegistry, this);
 
           // execute next instruction
           instruction = this.evalStack.eval();
@@ -167,7 +189,7 @@ _.extend(EvalManager.prototype, {
             stack: stack,
             classTable: this.classTable
           };
-          this.evalStack = new EvalStack(this.evalStack, astNode, _state, this._astRegistry);
+          this.evalStack = new EvalStack(this.evalStack, astNode, _state, this._astRegistry, this);
 
           // execute next instruction
           instruction = this.evalStack.eval();
@@ -215,6 +237,9 @@ _.extend(EvalManager.prototype, {
       this.clock.tick();
     };
 
+    //console.log("lc last cp at t = " + this.checkpoints[this.checkpoints.length - 1].globalTime
+    //      + " : " + this.checkpoints[this.checkpoints.length - 1].lc);
+
     // return the heap value at the returned address;
     // return undefined if the evaluation terminated with no return
     if (returnAddress !== undefined) {
@@ -236,7 +261,9 @@ _.extend(EvalManager.prototype, {
       heap: this.heap.checkpoint(),
       stack: this.evalStack.state.stack.checkpoint(),
       classTable: this.classTable.checkpoint(),
-      evalStack: this.evalStack.checkpoint()
+      evalStack: this.evalStack.checkpoint(),
+      lc: {},
+      globalTime: this.clock.time
     };
   },
 

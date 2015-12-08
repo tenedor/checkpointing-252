@@ -267,7 +267,7 @@ _.extend(ConstraintGenerator.prototype, {
         this.bAtPEqualsBAtP1SetXs(p, _p, xs));
 
     this.constraints = this.constraints.concat(Sk, this.or(Scp, Sncp));
-    console.log("constraints: " + this.constraints);
+    // console.log("constraints: " + this.constraints);
 
     return p;
   },

@@ -1,6 +1,7 @@
 (function() {
 
 var util = OO.util;
+var eval = OO.eval;
 
 var ast = OO.ast = {};
 
@@ -71,15 +72,15 @@ _.extend(Ast.prototype, {
     return ["skip"];
   },
 
-  eval: function(s, evaledArgs) {
+  eval: function(s, evaledArgs, evalManager) {
     if (evaledArgs.length < this.children.length) {
-      return this.evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs, evalManager);
     } else {
-      return this.evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs, evalManager);
     };
   },
 
-  evalNextChild: function(s, evaledArgs) {
+  evalNextChild: function(s, evaledArgs, evalManager) {
     var nextChild = this.children[evaledArgs.length];
 
     // if next child is a literal, add it directly to evaledArgs
@@ -92,7 +93,7 @@ _.extend(Ast.prototype, {
     };
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     return ["done", undefined];
   },
 
@@ -150,18 +151,18 @@ var If = ast.If = ast.Nodes["if"] = Stmt.extend({
     };
   },
 
-  eval: function(s, evaledArgs) {
+  eval: function(s, evaledArgs, evalManager) {
     if (evaledArgs.length < 1) {
-      return this.evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs, evalManager);
     } else if (evaledArgs.length < 2) {
       // detect truthiness
       return ["send", evaledArgs[0], "isTruthy", [], s.stack];
     } else {
-      return this.evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs, evalManager);
     };
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var isTruthy = s.heap.valueAtAddress(evaledArgs[1]).literal;
     var block = isTruthy ? this.children[1] : this.children[2];
     return ["eval", block, s.stack.stackWithNewFrame()];
@@ -184,18 +185,18 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
     };
   },
 
-  eval: function(s, evaledArgs) {
+  eval: function(s, evaledArgs, evalManager) {
     if (evaledArgs.length < 1) {
-      return this.evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs, evalManager);
     } else if (evaledArgs.length < 2) {
       // detect truthiness
       return ["send", evaledArgs[0], "isTruthy", [], s.stack];
     } else {
-      return this.evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs, evalManager);
     };
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var isTruthy = s.heap.valueAtAddress(evaledArgs[1]).literal;
     if (isTruthy) {
       return ["eval", this.children[1], s.stack.stackWithNewFrame()];
@@ -211,7 +212,7 @@ var While = ast.While = ast.Nodes["while"] = Stmt.extend({
 var Return = ast.Return = ast.Nodes["return"] = Stmt.extend({
   type: "return",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var addr = evaledArgs[0];
     return ["return", addr];
   }
@@ -231,7 +232,7 @@ var ClassDecl = ast.ClassDecl = ast.Nodes["classDecl"] = Stmt.extend({
     this.children = this.constructAsts(parsedAsts);
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var className = evaledArgs[0];
     var superClassName = evaledArgs[1];
     var instVarNames = evaledArgs.slice(2);
@@ -257,15 +258,15 @@ var MethodDecl = ast.MethodDecl = ast.Nodes["methodDecl"] = Stmt.extend({
     this.children = this.constructAsts(parsedAsts);
   },
 
-  eval: function(s, evaledArgs) {
+  eval: function(s, evaledArgs, evalManager) {
     if (evaledArgs.length < this.children.length - 1) {
-      return this.evalNextChild(s, evaledArgs);
+      return this.evalNextChild(s, evaledArgs, evalManager);
     } else {
-      return this.evalSelf(s, evaledArgs);
+      return this.evalSelf(s, evaledArgs, evalManager);
     };
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var className = evaledArgs[0];
     var methodName = evaledArgs[1];
     var argNames = evaledArgs.slice(2);
@@ -290,7 +291,7 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
     this.children = this.constructAsts(parsedAsts);
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var i, varName, addr;
     for (i = 0; i + 1 < evaledArgs.length; i+=2) {
       varName = evaledArgs[i];
@@ -305,13 +306,22 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
 // Set Variable
 //   @name varName
 //   @expr addr
+
+// right now, setVar is the only thing that touches LCi.
+// take the last checkpoint and make the
 var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
   type: "setVar",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var varName = evaledArgs[0];
     var addr = evaledArgs[1];
     s.stack.setVarToAddr(varName, addr);
+    //console.log("checkpoints size " + evalManager.checkpoints.length);
+    evalManager.checkpoints[evalManager.checkpoints.length - 1].lc[varName] = s.stack._clock.time;
+    // console.log(evalManager.checkpoints[evalManager.checkpoints.length - 1].lc);
+    //console.log("lc set for " + varName +
+    //    ", rel t = " + eval.checkpoints[eval.checkpoints.length - 1].lc[varName] +
+    //    ", last global t = " + eval.checkpoints[eval.checkpoints.length - 1].globalTime);
     return ["done", undefined];
   }
 });
@@ -324,7 +334,7 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
 var SetInstVar = ast.SetInstVar = ast.Nodes["setInstVar"] = Stmt.extend({
   type: "setInstVar",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var instance = s.heap.valueAtAddress(evaledArgs[0]);
     var instVarName = evaledArgs[1];
     var addr = evaledArgs[2];
@@ -353,7 +363,7 @@ var Expr = ast.Expr = Ast.extend({
 var GetVar = ast.GetVar = ast.Nodes["getVar"] = Expr.extend({
   type: "getVar",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var varName = evaledArgs[0];
     var addr = s.stack.addrOfVar(varName);
     return ["done", addr];
@@ -367,7 +377,7 @@ var GetVar = ast.GetVar = ast.Nodes["getVar"] = Expr.extend({
 var GetInstVar = ast.GetInstVar = ast.Nodes["getInstVar"] = Expr.extend({
   type: "getInstVar",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var instance = s.heap.valueAtAddress(evaledArgs[0]);
     var instVarName = evaledArgs[1];
     var addr = instance.addressOfInstVar(instVarName);
@@ -408,7 +418,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     };
   },
 
-  eval: function(s, evaledArgs) {
+  eval: function(s, evaledArgs, evalManager) {
     // if children came pre-evaled, inject them into evaledArgs
     if (this._hasPreEvaledChildren && evaledArgs.length < this.children.length) {
       evaledArgs.splice(0);
@@ -418,7 +428,7 @@ var Send = ast.Send = ast.Nodes["send"] = Expr.extend({
     return this.__super__.eval.apply(this, arguments);
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var receiver = evaledArgs[0];
     var messageName = evaledArgs[1];
     var args = evaledArgs.slice(2);
@@ -476,7 +486,7 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
     };
   },
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var className = evaledArgs[0];
     var args = evaledArgs.slice(1);
     var instance = s.classTable.newInstance(className);
@@ -493,7 +503,7 @@ var New = ast.New = ast.Nodes["new"] = Expr.extend({
 var This = ast.This = ast.Nodes["this"] = Expr.extend({
   type: "this",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var addr = s.stack.addrOfVar("self");
     return ["done", addr];
   }
@@ -505,8 +515,8 @@ var This = ast.This = ast.Nodes["this"] = Expr.extend({
 var Literal = ast.Literal = Expr.extend({
   type: "literal",
 
-  eval: function(s, evaledArgs) {
-    return this.evalSelf(s, evaledArgs);
+  eval: function(s, evaledArgs, evalManager) {
+    return this.evalSelf(s, evaledArgs, evalManager);
   }
 });
 
@@ -516,7 +526,7 @@ var Literal = ast.Literal = Expr.extend({
 var Null = ast.Null = ast.Nodes["null"] = Literal.extend({
   type: "null",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var instance = s.classTable.newLiteralInstance(null);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
@@ -529,7 +539,7 @@ var Null = ast.Null = ast.Nodes["null"] = Literal.extend({
 var NumberLiteral = ast.NumberLiteral = ast.Nodes["number"] = Literal.extend({
   type: "number",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var numberValue = parseFloat(this.children[0]);
     var instance = s.classTable.newLiteralInstance(numberValue);
     var addr = s.heap.storeValue(instance);
@@ -543,7 +553,7 @@ var NumberLiteral = ast.NumberLiteral = ast.Nodes["number"] = Literal.extend({
 var StringLiteral = ast.StringLiteral = ast.Nodes["string"] = Literal.extend({
   type: "string",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var stringValue = "" + this.children[0];
     var instance = s.classTable.newLiteralInstance(stringValue);
     var addr = s.heap.storeValue(instance);
@@ -564,7 +574,7 @@ var BooleanLiteral = ast.BooleanLiteral = Literal.extend({
 var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
   type: "true",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var instance = s.classTable.newLiteralInstance(true);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];
@@ -577,7 +587,7 @@ var True = ast.True = ast.Nodes["true"] = BooleanLiteral.extend({
 var False = ast.False = ast.Nodes["false"] = BooleanLiteral.extend({
   type: "false",
 
-  evalSelf: function(s, evaledArgs) {
+  evalSelf: function(s, evaledArgs, evalManager) {
     var instance = s.classTable.newLiteralInstance(false);
     var addr = s.heap.storeValue(instance);
     return ["done", addr];

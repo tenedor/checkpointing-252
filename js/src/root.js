@@ -15,7 +15,9 @@ OO.previousOO = previousOO;
 
 // tell the grammar about OO
 O.OO = OO;
-  
+
+
+var eval = OO.eval;
 
 // Registry - map uids to objects
 var Registry = function() {
@@ -102,12 +104,14 @@ OO.testPageHtml = function(parsedAst) {
 
 OO.queryAst = function(query, parsedAst, ioIndex) {
   // do something here
-  var queryAst = O.parse(query);
+  //var queryAst = O.parse(query);
   // from CP i, evaluate for max LC i (v) steps
   // from the CP, where the max is taken over all
   // vars v in the query.
   // at each step, test if query is false.
   //
+
+  // a query is actually just a comma-separated list of
 
   return "some result";
 };
