@@ -27,14 +27,18 @@ let rec exp_tostring (e : exp) : string =
   | Not e -> "!(" ^ (exp_tostring e) ^ ")"
   | Half e -> "(" ^ (exp_tostring e) ^ ")/2"
 
-let rec inst_tostring (p : inst) : string =
-  let or_under_and i =
-    match i with
-      Or (_, _) -> "(" ^ (inst_tostring i) ^ ")"
-    | _ -> inst_tostring i
+let inst_tostring (p : inst) : string =
+  let rec spaces (i : int) : string =
+    if i = 0 then ""
+    else " " ^ (spaces (i - 1))
   in
-  match p with
-    Clause e -> "(" ^ (exp_tostring e) ^ ")"
-  | And (i1, i2) -> (or_under_and i1) ^ " &\n" ^ (or_under_and i2)
-  | Or (i1, i2) -> (inst_tostring i1) ^ " | " ^ (inst_tostring i2)
-
+  let rec or_under_and margin i =
+    match i with
+      Or (_, _) -> "(\n" ^ (spaces (margin + 1)) ^ (indented (margin + 1) i) ^ "\n)"
+    | _ -> indented margin i
+  and indented (margin : int) (p : inst) =
+    match p with
+      Clause e -> "(" ^ (exp_tostring e) ^ ")"
+    | And (i1, i2) -> (or_under_and margin i1) ^ " &\n" ^ (spaces margin) ^ (or_under_and margin i2)
+    | Or (i1, i2) -> (indented margin i1) ^ " | " ^ (indented margin i2)
+  in (indented 0 p)
