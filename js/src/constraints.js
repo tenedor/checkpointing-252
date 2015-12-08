@@ -44,7 +44,7 @@ var constraints = OO.constraints = {};
    s = "" | %s_%D  // %s
    p = %D%s        // %p
    x = varName     // %x
-   d = 0 | 65536   // %d
+   d = 0 | 1       // %d
 
    // variable bases, operators
    v = n | k | B | cp
@@ -107,8 +107,8 @@ var ConstraintGenerator = constraints.ConstraintGenerator = function() {
   this.varNameExtractor = new VarNameExtractor();
   this.activeVarNames = [];
   this.constraints = [];
-  this.nStep = 65536; // 2^16
-  this.xStep = 65536; // 2^16
+  this.nStep = 1;
+  this.xStep = 1;
   this.loopUnrollLength = 10;
   this.suffixDelimiter = "_";
 };
