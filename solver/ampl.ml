@@ -1,6 +1,8 @@
 (* convert OOC to AMPL *)
 open Ast
 
+exception Unimplemented
+(*
 (* We're going to represent memory for Fish programs using a 
  * Hashtable mapping variables to integer references. *)
 
@@ -76,4 +78,6 @@ let eval (p:program):int =
     (eval_stmt p; 
      print_string "Error -- program terminated without returning!\n";
      raise BadProgram
-    ) with Done i -> i
+    ) with Done i -> i*)
+
+let ampl (i : inst) : string = raise Unimplemented
