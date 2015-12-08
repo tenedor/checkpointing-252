@@ -80,6 +80,7 @@ OO.evalProgramAndRegistryWithCheckpoints = function(pr, checkpointIDs) {
 };
 
 OO.testPageHtml = function(parsedAst) {
+  var ioIndex = OO.io.length - 1;
   var div = $('<div class="query-container">');
   var button = $('<button>').text('Query').appendTo(div);
   var queryField = $('<input type="text">').appendTo(div);
@@ -87,7 +88,7 @@ OO.testPageHtml = function(parsedAst) {
 
   var onClickQueryButton = function() {
     var query = queryField.val();
-    var queryResult = OO.queryAst(query, parsedAst);
+    var queryResult = OO.queryAst(query, parsedAst, ioIndex);
     output.text(queryResult);
 
     console.log('query: ' + query);
@@ -99,7 +100,7 @@ OO.testPageHtml = function(parsedAst) {
   return div;
 };
 
-OO.queryAst = function(query, parsedAst) {
+OO.queryAst = function(query, parsedAst, ioIndex) {
   // do something here
   return "some result";
 };
