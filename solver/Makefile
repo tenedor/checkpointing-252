@@ -5,28 +5,11 @@
 COMPILER=ocamlc
 TOPLEVEL=ocamlmktop
 
-all: clean comb yacc
-
-utility:
-	$(COMPILER) -c explode.ml
+all: clean yacc
 
 com:
 	$(COMPILER) -c ast.ml
-	$(COMPILER) -c eval.ml
-
-comb: utility com
-	$(COMPILER) -c lcombinators.ml
-	$(COMPILER) -c comblexer.ml
-	$(COMPILER) -c combparser.ml
-	$(COMPILER) -c fishcomb.ml
-	$(COMPILER) -o ps1comb ast.cmo eval.cmo explode.cmo lcombinators.cmo comblexer.cmo combparser.cmo fishcomb.cmo
-	
-toplevel: utility com
-	$(TOPLEVEL) -c lcombinators.ml
-	$(TOPLEVEL) -c comblexer.ml
-	$(TOPLEVEL) -c combparser.ml
-	$(TOPLEVEL) -c fishcomb.ml
-	$(TOPLEVEL) -o ps1combtoplevel ast.cmo eval.cmo explode.cmo lcombinators.cmo comblexer.cmo combparser.cmo 
+	$(COMPILER) -c ampl.ml
 
 yacc: com
 	ocamlyacc parse.mly
@@ -35,7 +18,11 @@ yacc: com
 	ocamllex lex.mll
 	$(COMPILER) -c lex.ml
 	$(COMPILER) -c oocparse.ml
-	$(COMPILER) -o oocparse ast.cmo parse.cmo lex.cmo eval.cmo oocparse.cmo
+	$(COMPILER) -o oocparse ast.cmo parse.cmo lex.cmo ampl.cmo oocparse.cmo
+
+toplevel: com yacc
+	$(COMPILER) -c test.ml
+	$(TOPLEVEL) -o ps1toplevel ast.cmo parse.cmo lex.cmo eval.cmo test.cmo
 
 clean:
-	-rm *.cmo *.cmi ps1comb oocparse parse.ml parse.mli lex.ml
+	-rm *.cmo *.cmi oocparse parse.ml parse.mli lex.ml

@@ -1,5 +1,5 @@
 open Ast
-open Eval
+open Ampl 
 
 exception BadArgs
 
