@@ -1,16 +1,19 @@
 {
 open Parse
 open Lexing
+exception LexError of string
+}
 
 (* definition section *)
 let cr='\013'
 let nl='\010'
 let eol=(cr nl|nl|cr)
-let ws=('\012'|'\t'|' '|'"')* (* we ignore " which appears when copypasting constraints *)
+let ws=('\012'|'\t'|' '|'"')*
 
+let digit=['0'-'9'] 
 let id = digit* ('_' digit*)*
-let name = ['A'-'Z''a'-'z']['a'-'z''A'-'Z''0'-'9']* (* variable names in OO don't have _? *)
-let var = [('n' id) | ('k' id) | ('B' id name)]
+let name = ['A'-'Z''a'-'z']['a'-'z''A'-'Z''0'-'9']*
+let var = ('n' id | 'k' id | 'B' id name)
 
 (* rules section *)
 rule lexer = parse
