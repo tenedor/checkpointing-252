@@ -12,14 +12,15 @@ let parse_error s =
 %}
 
 /* Tells us which non-terminal to start the grammar with. */
-%start program
+%start orinst
 
 /* This specifies the non-terminals of the grammar and specifies the
  * types of the values they build. Don't forget to add any new non-
  * terminals here.
  */
-%type <Ast.program> program
-%type <Ast.stmt> stmt
+%type <Ast.inst> orinst
+%type <Ast.inst> andinst
+%type <Ast.inst> instance
 %type <Ast.exp> exp
 
 /* The %token directive gives a definition of all of the terminals
@@ -31,28 +32,56 @@ let parse_error s =
  */
 %token <int> INT 
 %token <string> VAR
-%token EOF RET LPAREN RPAREN PLUS MINUS TIMES DIV EQ NEQ LT LTE GT GTE NOT AND OR SEMI
-%token LBRACE RBRACE ASSIGN IF ELSE WHILE FOR
+%token EOF LPAREN RPAREN LBRACKET RBRACKET PLUS EQ NOT HALF AND OR
 
 /* Set +, -, *, /, boolean operators, as left associative
  * Assignment and boolean not are right associative
  * The comparison operators are non associative, so they don't appear together
  * Finally, the operators increase in precedence as you go down the list */
 
-%right ASSIGN
+/*%right ASSIGN
 %left OR
 %left AND
 %right NOT
 %nonassoc EQ NEQ LT LTE GT GTE
 %left PLUS MINUS
 %left TIMES DIV
-%right "dangling" ELSE /* citation 1 */
+%right "dangling" ELSE 
+*/
 
-/* Here's where the real grammar starts -- you'll need to add 
- * more rules here... Do not remove the 2%'s!! */
+%nonassoc EQ
+%left PLUS
+%left HALF
+%right NOT
+
+/* Here's where the real grammar starts! */
 %%
 
-program:
+orinst:
+    andinst { $1 }
+  | andinst OR orinst { Or ($1, $3) }
+
+andinst:
+    instance { $1 }
+  | instance AND andinst { And ($1, $3) }
+
+instance:
+    exp { Clause $1 }
+  | LPAREN orinst RPAREN { $2 }
+  /*| exp AND instance { And (Clause $1, $3) }*/
+  /*| exp OR instance { Or (Clause $1, $3) }*/
+  /*| LPAREN instance RPAREN { $2 }*/
+
+exp:
+    INT { Int($1) }
+  | VAR { Var($1) }
+  | LBRACKET exp RBRACKET { $2 }
+  | exp PLUS exp { Plus ($1, $3) }
+  | exp EQ exp { Eq ($1, $3) }
+  | NOT exp { Not $2 }
+  | exp HALF { Half $1 }
+
+/*program:
   stmt EOF { $1 }
 ;
 
@@ -67,7 +96,7 @@ block :
 ;
 
 line :
-  /* empty */ SEMI { (Ast.skip, 0) }
+  (* empty *) SEMI { (Ast.skip, 0) }
   | exp SEMI { (Exp $1, 0) }
   | RET exp SEMI { (Return $2, 0) }
   | IF LPAREN exp RPAREN block %prec "dangling" { (If ($3, $5, (Ast.skip, 0)), 0) }
@@ -95,4 +124,5 @@ exp :
   | exp AND exp { (And ($1,$3), 0) }
   | exp OR exp { (Or ($1,$3), 0) }
   | VAR ASSIGN exp { (Assign ($1, $3), 0) }
-;
+;*/
+
