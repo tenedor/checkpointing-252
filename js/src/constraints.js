@@ -107,8 +107,8 @@ var ConstraintGenerator = constraints.ConstraintGenerator = function() {
   this.varNameExtractor = new VarNameExtractor();
   this.activeVarNames = [];
   this.constraints = [];
-  this.nStep = 1;
-  this.xStep = 1;
+  this.nStep = 65536;
+  this.xStep = 65536;
   this.loopUnrollLength = 10;
   this.suffixDelimiter = "_";
 };
