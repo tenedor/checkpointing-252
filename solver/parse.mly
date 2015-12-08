@@ -52,6 +52,7 @@ instance:
   | exp AND instance { And (Clause $1, $3) }
   | exp OR instance { Or (Clause $1, $3) }
   | LPAREN instance RPAREN { $2 }
+;
 
 exp:
     INT { Int($1) }
@@ -61,6 +62,7 @@ exp:
   | exp EQ exp { Eq ($1, $3) }
   | NOT exp { Not $2 }
   | exp HALF { Half $1 }
+;
 
 /*program:
   stmt EOF { $1 }
