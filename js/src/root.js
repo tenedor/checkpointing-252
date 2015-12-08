@@ -70,13 +70,13 @@ OO.evalAST = function(parsedAst) {
 OO.evalProgramAndRegistry = function(pr) {
   var eval = OO.eval;
   var evalManager = new eval.EvalManager(pr[0], pr[1]);
-  return evalManager.eval();
+  return evalManager.eval([]);
 };
 
 OO.evalProgramAndRegistryWithCheckpoints = function(pr, checkpointIDs) {
   var eval = OO.eval;
   var evalManager = new eval.EvalManager(pr[0], pr[1]);
-  return evalManager.evalWithCheckpoints(checkpointIDs);
+  return evalManager.eval(checkpointIDs);
 };
 
 OO.testPageHtml = function(parsedAst) {
@@ -102,6 +102,13 @@ OO.testPageHtml = function(parsedAst) {
 
 OO.queryAst = function(query, parsedAst, ioIndex) {
   // do something here
+  var queryAst = O.parse(query);
+  // from CP i, evaluate for max LC i (v) steps
+  // from the CP, where the max is taken over all
+  // vars v in the query.
+  // at each step, test if query is false.
+  //
+
   return "some result";
 };
 

@@ -107,7 +107,7 @@ var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
 };
 
 _.extend(EvalManager.prototype, {
-  eval: function() {
+  eval: function(checkpointIDs) {
     var complete, returnAddress, instruction, astNode, stack, _state;
     var instance, method, args, evaledArgs, addr, returnValue;
 
@@ -123,9 +123,10 @@ _.extend(EvalManager.prototype, {
       // take a checkpoint
   //    console.log(this.evalStack.state.stack);
       // this.evalstack.astnode.id
-      if(typeof this.evalStack.astNode.takeCheckpoint !== undefined)
-        checkpoints.push(this.checkpoint());
-
+      // TODO: optimize?
+      if (checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) {
+          checkpoints.push(this.checkpoint());
+      }
       // this.resume(checkpoints[checkpoints.length-1]);
 
       switch (instruction[0]) {
