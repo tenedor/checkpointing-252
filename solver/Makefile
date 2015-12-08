@@ -11,6 +11,7 @@ com:
 	$(COMPILER) -c ast.ml
 	$(COMPILER) -c ampl.ml
 
+# to debug the parser, export OCAMLRUNPARAM='p'
 yacc: com
 	ocamlyacc parse.mly
 	$(COMPILER) -c parse.mli

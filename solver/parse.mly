@@ -1,6 +1,7 @@
 %{
 open Ast
 open Lexing
+(* to debug this file, export OCAMLRUNPARAM='p' *)
 %}
 
 /* Tells us which non-terminal to start the grammar with. */
@@ -19,7 +20,6 @@ open Lexing
  * tokens definition used by the lexer. So this is effectively the
  * interface between the lexer and the parser --- the lexer must
  * build values using this datatype constructor to pass to the parser.
- * You will need to augment this with your own tokens...
  */
 %token <int> INT 
 %token <string> VAR
@@ -45,8 +45,8 @@ input:
 
 instance:
     exp { Clause $1 }
-  | exp AND instance { And (Clause $1, $3) }
-  | exp OR instance { Or (Clause $1, $3) }
+  | instance AND instance { And ($1, $3) }
+  | instance OR instance { Or ($1, $3) }
   | LPAREN instance RPAREN { $2 }
 ;
 
