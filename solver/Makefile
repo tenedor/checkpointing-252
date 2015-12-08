@@ -5,7 +5,7 @@
 COMPILER=ocamlc
 TOPLEVEL=ocamlmktop
 
-all: clean yacc
+all: clean yacc test
 
 com:
 	$(COMPILER) -c ast.ml
@@ -25,5 +25,9 @@ toplevel: com yacc
 	$(COMPILER) -c test.ml
 	$(TOPLEVEL) -o ps1toplevel ast.cmo parse.cmo lex.cmo eval.cmo test.cmo
 
+test: oocparse
+	./oocparse test/example_vars.ooc > test/output_vars.ampl
+	./oocparse test/example_if.ooc > test/output_if.ampl
+
 clean:
-	-rm *.cmo *.cmi oocparse parse.ml parse.mli lex.ml
+	-rm *.cmo *.cmi oocparse parse.ml parse.mli lex.ml test/output_*.ampl

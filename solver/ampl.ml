@@ -59,7 +59,7 @@ let decl_params (p : var_set) : string =
 let decl_vars (v : var_set) : string =
   let rec decl_var_list (pl : string list) : string =
     match pl with
-      p :: pr -> "var " ^ p ^ " ;\n" ^ (decl_var_list pr)
+      p :: pr -> "var " ^ p ^ " integer ;\n" ^ (decl_var_list pr)
     | _ -> ""
   in decl_var_list (set_to_list v)
 
@@ -88,7 +88,7 @@ let constraints (i : inst) : string =
     | And (i1, i2) -> " ( " ^ (inst_constraint i1) ^ " and " ^ (inst_constraint i2) ^ " ) \n"
     | Or (i1, i2) -> " ( " ^ (inst_constraint i1) ^ " or " ^ (inst_constraint i2) ^ " ) \n"
   in
-  "subject to prog_cond : \n" ^ (inst_constraint i)
+  "subject to prog_cond : \n" ^ (inst_constraint i) ^ " ; \n"
 
 let ampl (i : inst) : string =
   let par_decl = decl_params (collect_params i) in
