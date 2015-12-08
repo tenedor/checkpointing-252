@@ -14,9 +14,8 @@ let parse_file() =
     else (if Array.length argv = 2
     then open_in argv.(1)
     else let _ = 
-      prerr_string ("usage: " ^ argv.(0) ^ "[file-to-parse]\n") in
-    raise BadArgs) in
-  Parse.instance Lex.lexer (Lexing.from_channel ch)
+      prerr_string ("usage: " ^ argv.(0) ^ "[file-to-parse]\n") in raise BadArgs) in
+  Parse.input Lex.lexer (Lexing.from_channel ch)
 
 (* Expect 1 command line argument, the file to parse 
  * in absence of argument, it will default to stdin

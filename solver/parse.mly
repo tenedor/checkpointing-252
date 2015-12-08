@@ -1,23 +1,16 @@
 %{
 open Ast
 open Lexing
-(* use this to get the line number for the n'th token *)
-let rhs n =
-  let pos = Parsing.rhs_start_pos n in
-  pos.pos_lnum
-let parse_error s =
-  let pos = Parsing.symbol_end_pos () in
-  let l = pos.pos_lnum in
-  print_string ("line "^(string_of_int l)^": "^s^"\n") 
 %}
 
 /* Tells us which non-terminal to start the grammar with. */
-%start instance
+%start input
 
 /* This specifies the non-terminals of the grammar and specifies the
  * types of the values they build. Don't forget to add any new non-
  * terminals here.
  */
+%type <Ast.inst> input
 %type <Ast.inst> instance
 %type <Ast.exp> exp
 
@@ -46,6 +39,9 @@ let parse_error s =
 
 /* Here's where the real grammar starts! */
 %%
+
+input:
+  instance EOF { $1 }
 
 instance:
     exp { Clause $1 }
