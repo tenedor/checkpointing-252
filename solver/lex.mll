@@ -13,7 +13,7 @@ let ws=('\012'|'\t'|' '|'"')*
 let digit=['0'-'9'] 
 let id = digit* ('_' digit*)*
 let name = ['A'-'Z''a'-'z']['a'-'z''A'-'Z''0'-'9']*
-let var = ('n' id | 'k' id | 'B' id name)
+let var = ( 'c' 'p' id | 'n' id | 'k' id | 'B' id name )
 
 (* rules section *)
 rule lexer = parse
