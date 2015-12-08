@@ -2,6 +2,108 @@
 open Ast
 
 exception Unimplemented
+
+module VarSet = Set.Make(struct type t = var let compare = compare end)
+type var_set = VarSet.t
+let empty_set = VarSet.empty
+let add_var vs s = VarSet.add s vs
+let remove_var vs s = 
+  if VarSet.mem s vs
+  then VarSet.remove s vs
+  else vs
+let set_union v1 v2 = VarSet.union v1 v2
+let set_to_list vs = VarSet.elements vs
+
+(* collect binary parameters: cp *)
+let collect_params (i : inst) : var_set =
+  let rec collect_params_exp (e : exp) : var_set =
+    match e with
+      Int _ -> empty_set
+    | Var v -> if (String.sub v 0 2) = "cp" then add_var empty_set v else empty_set
+    | Plus (e1, e2) | Eq (e1, e2) -> set_union (collect_params_exp e1) (collect_params_exp e2)
+    | Not e | Half e -> collect_params_exp e
+  in
+  let rec collect_params_inst (i : inst) : var_set =
+    match i with
+      Clause e -> collect_params_exp e
+    | And (i1, i2) | Or (i1, i2) -> set_union (collect_params_inst i1) (collect_params_inst i2)
+  in collect_params_inst i
+
+(* collect variables: n, k, B *)
+let collect_vars (i : inst) : var_set = 
+  let rec collect_vars_exp (e : exp) : var_set =
+    match e with
+      Int _ -> empty_set
+    | Var v -> let head = String.sub v 0 1 in
+      if head = "n" || head = "k" || head = "B"
+      then add_var empty_set v
+      else empty_set
+    | Plus (e1, e2) | Eq (e1, e2) -> set_union (collect_vars_exp e1) (collect_vars_exp e2)
+    | Not e | Half e -> collect_vars_exp e
+  in
+  let rec collect_vars_inst (i : inst) : var_set =
+    match i with
+      Clause e -> collect_vars_exp e
+    | And (i1, i2) | Or (i1, i2) -> set_union (collect_vars_inst i1) (collect_vars_inst i2)
+  in collect_vars_inst i
+
+(* generate binary parameter declarations *)
+let decl_params (p : var_set) : string = 
+  let rec decl_param_list (pl : string list) : string =
+    match pl with
+      p :: pr -> "param " ^ p ^ " binary;\n" ^ (decl_param_list pr)
+    | _ -> ""
+  in decl_param_list (set_to_list p)
+
+(* generate variable declarations *)
+let decl_vars (v : var_set) : string =
+  let rec decl_var_list (pl : string list) : string =
+    match pl with
+      p :: pr -> "var " ^ p ^ " ;\n" ^ (decl_var_list pr)
+    | _ -> ""
+  in decl_var_list (set_to_list v)
+
+(* generate an objective clause with given checkpoint/query cost multipliers *)
+let minimization (cp_km : float) (q_km : float) : string = 
+  "minimize prog_cost : " ^
+  (string_of_float cp_km) ^ " * n2 + " ^ (string_of_float q_km) ^ " * k2 ;\n"
+
+(* convert instance to a set of constraints *)
+let constraints (i : inst) : string = 
+  let rec exp_constraint (e : exp) : string =
+    match e with
+      Int i -> string_of_int i
+    | Var v -> v
+    | Plus (e1, e2) -> " ( " ^ (exp_constraint e1) ^ " + " ^ (exp_constraint e2) ^ " ) "
+    | Eq (e1, e2) -> " ( " ^ (exp_constraint e1) ^ " = " ^ (exp_constraint e2) ^ " ) "
+    | Not e -> " ( not ( " ^ (exp_constraint e) ^ " )) "
+    | Half e -> " ( ( " ^ (exp_constraint e) ^ " )/2 ) "
+  in
+  let rec inst_constraint (i : inst) : string =
+    match i with
+      Clause e -> (match e with
+        Var v -> (exp_constraint (Eq (Var v, Int 1)))
+      | Not (Var v) -> (exp_constraint (Eq (Var v, Int 0)))
+      | _ -> exp_constraint e)
+    | And (i1, i2) -> " ( " ^ (inst_constraint i1) ^ " and " ^ (inst_constraint i2) ^ " ) \n"
+    | Or (i1, i2) -> " ( " ^ (inst_constraint i1) ^ " or " ^ (inst_constraint i2) ^ " ) \n"
+  in
+  "subject to prog_cond : \n" ^ (inst_constraint i)
+
+let ampl (i : inst) : string =
+  let par_decl = decl_params (collect_params i) in
+  let var_decl = decl_vars (collect_vars i) in
+  let min = (minimization 0. 1.) in
+  let subj = (constraints i) in
+    "### 1. PARAMETERS ###\n" ^
+    par_decl ^
+    "### 2. VARIABLES ###\n" ^
+    var_decl ^
+    "### 3. OBJECTIVE ###\n" ^
+    min ^
+    "### 4. CONSTRAINTS ###\n" ^
+    subj
+
 (*
 (* We're going to represent memory for Fish programs using a 
  * Hashtable mapping variables to integer references. *)
@@ -80,4 +182,3 @@ let eval (p:program):int =
      raise BadProgram
     ) with Done i -> i*)
 
-let ampl (i : inst) : string = raise Unimplemented

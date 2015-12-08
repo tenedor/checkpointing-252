@@ -1,9 +1,6 @@
 (* AST for OOC (OO constraint) language *)
 type var = string
 
-type binop = 
-  Plus | Eq
-
 type exp = 
   Int of int                          (* may in practice just be 0 or 1 *)
 | Var of var                          (* n[0-9]*(_[0-9]* )* or k... or B...[varname] *)

@@ -22,5 +22,5 @@ let parse_file() =
  * usage: ps2yacc [file-to-parse] *)
 let _ =
   let inst = parse_file() in
-  prerr_string (inst_tostring inst);
+  (* prerr_string (inst_tostring inst); (* enable for AST output *) *)
   print_string (ampl inst)
