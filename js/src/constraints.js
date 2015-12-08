@@ -48,10 +48,10 @@ var constraints = OO.constraints = {};
 
    // variable bases, operators
    v = n | k | B | cp
-   o = + | /2 | = | ! | & | \| | ( | )
+   o = + | /2 | = | ! | & | \| | ( | ) | [ | ]
 
    // constraint expressions, constraints
-   z = n%p | k%p | B%p%x | %d | z1+z2 | (z)/2
+   z = n%p | k%p | B%p%x | %d | z1+z2 | [z]/2
    S = cp%p | !cp%p | z1=z2 | S1&S2 | (S1|S2)
 */
 
@@ -168,7 +168,7 @@ _.extend(ConstraintGenerator.prototype, {
     var x;
     for (i = 0; i < this.activeVarNames.length; i++) {
       x = this.activeVarNames[i];
-      constraints.push("B"+p+x+"=(B"+p1+x+"+B"+p2+x+")/2");
+      constraints.push("B"+p+x+"=[B"+p1+x+"+B"+p2+x+"]/2");
     };
     return constraints;
   },
@@ -218,9 +218,9 @@ _.extend(ConstraintGenerator.prototype, {
     var p2 = this[c1.type](c2, _p, s);
     var p1 = this[c1.type](c1, _p, s);
 
-    var navg = "(n"+p1+"+n"+p2+")/2";
-    var kavg = "(k"+p1+"+k"+p2+")/2";
-    var sizeBavg = "("+this.bSizeAtP(p1)+"+"+this.bSizeAtP(p2)+")/2";
+    var navg = "[n"+p1+"+n"+p2+"]/2";
+    var kavg = "[k"+p1+"+k"+p2+"]/2";
+    var sizeBavg = "["+this.bSizeAtP(p1)+"+"+this.bSizeAtP(p2)+"]/2";
 
     var Sk = ["k"+p+"="+kavg+"+"+sizeBavg];
     var Scp = ["cp"+p, "n"+p+"="+navg+"+"+this.nStep].concat(

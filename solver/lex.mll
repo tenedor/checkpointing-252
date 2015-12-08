@@ -23,6 +23,8 @@ rule lexer = parse
 | digit+ { INT(int_of_string(Lexing.lexeme lexbuf)) } 
 | '(' { LPAREN }
 | ')' { RPAREN }
+| '[' { LBRACKET }
+| ']' { RBRACKET }
 | '+' { PLUS }
 | "=" { EQ }
 | '!' { NOT }
