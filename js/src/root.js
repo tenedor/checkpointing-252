@@ -79,4 +79,29 @@ OO.evalProgramAndRegistryWithCheckpoints = function(pr, checkpointIDs) {
   return evalManager.evalWithCheckpoints(checkpointIDs);
 };
 
+OO.testPageHtml = function(parsedAst) {
+  var div = $('<div class="query-container">');
+  var button = $('<button>').text('Query').appendTo(div);
+  var queryField = $('<input type="text">').appendTo(div);
+  var output = $('<p>').text('-').appendTo(div);
+
+  var onClickQueryButton = function() {
+    var query = queryField.val();
+    var queryResult = OO.queryAst(query, parsedAst);
+    output.text(queryResult);
+
+    console.log('query: ' + query);
+    console.log('result: ' + queryResult);
+  };
+
+  button.click(onClickQueryButton);
+
+  return div;
+};
+
+OO.queryAst = function(query, parsedAst) {
+  // do something here
+  return "some result";
+};
+
 })();

@@ -128,6 +128,14 @@ O.evalAST = function(ast) {
   };
 };
 
+O.testPageHtml = function(ast) {
+  if (O.OO && O.OO.testPageHtml) {
+    return O.OO.testPageHtml(ast);
+  } else {
+    return $("<div>");
+  };
+};
+
 // O.transAST is declared in oo.js
 // O.prettyPrintAST is declared in prettyPrint.js
 
