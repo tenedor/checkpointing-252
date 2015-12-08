@@ -12,14 +12,12 @@ let parse_error s =
 %}
 
 /* Tells us which non-terminal to start the grammar with. */
-%start orinst
+%start instance
 
 /* This specifies the non-terminals of the grammar and specifies the
  * types of the values they build. Don't forget to add any new non-
  * terminals here.
  */
-%type <Ast.inst> orinst
-%type <Ast.inst> andinst
 %type <Ast.inst> instance
 %type <Ast.exp> exp
 
@@ -34,20 +32,12 @@ let parse_error s =
 %token <string> VAR
 %token EOF LPAREN RPAREN LBRACKET RBRACKET PLUS EQ NOT HALF AND OR
 
-/* Set +, -, *, /, boolean operators, as left associative
- * Assignment and boolean not are right associative
- * The comparison operators are non associative, so they don't appear together
+/* Boolean not and the halver are unary
+ * The comparison operators are non associative, as they don't appear together
  * Finally, the operators increase in precedence as you go down the list */
 
-/*%right ASSIGN
 %left OR
 %left AND
-%right NOT
-%nonassoc EQ NEQ LT LTE GT GTE
-%left PLUS MINUS
-%left TIMES DIV
-%right "dangling" ELSE 
-*/
 
 %nonassoc EQ
 %left PLUS
@@ -57,20 +47,11 @@ let parse_error s =
 /* Here's where the real grammar starts! */
 %%
 
-orinst:
-    andinst { $1 }
-  | andinst OR orinst { Or ($1, $3) }
-
-andinst:
-    instance { $1 }
-  | instance AND andinst { And ($1, $3) }
-
 instance:
     exp { Clause $1 }
-  | LPAREN orinst RPAREN { $2 }
-  /*| exp AND instance { And (Clause $1, $3) }*/
-  /*| exp OR instance { Or (Clause $1, $3) }*/
-  /*| LPAREN instance RPAREN { $2 }*/
+  | exp AND instance { And (Clause $1, $3) }
+  | exp OR instance { Or (Clause $1, $3) }
+  | LPAREN instance RPAREN { $2 }
 
 exp:
     INT { Int($1) }
