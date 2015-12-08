@@ -9,7 +9,7 @@ all: clean yacc
 
 com:
 	$(COMPILER) -c ast.ml
-	$(COMPILER) -c ampl.ml
+	#$(COMPILER) -c ampl.ml
 
 yacc: com
 	ocamlyacc parse.mly

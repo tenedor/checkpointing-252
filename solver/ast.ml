@@ -1,3 +1,4 @@
+(* AST for OOC (OO constraint) language *)
 type var = string
 
 type binop = 
