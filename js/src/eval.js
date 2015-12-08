@@ -132,7 +132,6 @@ _.extend(EvalManager.prototype, {
 
         case "eval":
           astNode = instruction[1];
-          console.log(astNode);
           stack = instruction[2];
 
           // add new eval frame
