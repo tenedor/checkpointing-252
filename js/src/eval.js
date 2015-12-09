@@ -125,55 +125,28 @@ _.extend(EvalManager.prototype, {
     // execute first instruction
     instruction = this.evalStack.eval();
 
-    if (typeof this.checkpoints === "undefined") {
-      this.checkpoints = [];
-      this.currentIDs = [];
-    }
-
-    //this.checkpoints.push(this.checkpoint());
-    // eval loop
+    // if resuming, load correct checkpoint
+    // otherwise, take first checkpoint
     if (typeof this.restoreIndex !== "undefined") {
       this.resume(this.checkpoints[this.restoreIndex]);
     } else {
+      if (typeof this.checkpoints === "undefined") {
+        this.checkpoints = [];
+        this.currentIDs = [];
+      };
       this.checkpoints.push(this.checkpoint());
       this.currentIDs.push(1);
-    }
+    };
 
     while (!complete) {
-      //cp = this.checkpoint();
-      //this.resume(cp);
 
-      //if (this.checkpoints.length > 0) {
-      //  console.log("lc last cp at t = " + this.checkpoints[this.checkpoints.length - 1].globalTime
-      //      + " : " + this.checkpoints[this.checkpoints.length - 1].lc);
-      //  console.log(this.checkpoints[this.checkpoints.length - 1].lc);
-      //}
-      //
-      //console.log(this.clock.time);
-      //if (this.clock.time % 2 === 0) {
-      //}
-      // take a checkpoint
-  //    console.log(this.evalStack.state.stack);
-      // this.evalstack.astnode.id
-      // TODO: optimize?
-
+      // for resume mode
       if (typeof this.restoreIndex !== "undefined") {
         if (this.clock.time > this.maxTime) {
           break;
-        }
-      }
+        };
+      };
 
-
-
-      // this.resume(checkpoints[checkpoints.length-1]);
-      // eval query
-      //var tempQueryCp;
-      //if (typeof currentQueryAst !== "undefined") {
-      //  tempQueryCp = this.checkpoint();
-      //  this.evalStack = new EvalStack(this.evalStack, eval.currentQueryAst, _state, this._astRegistry);
-      //
-      //  this.resume(tempQueryCp);
-      //}
       switch (instruction[0]) {
         case "skip":
           instruction = this.evalStack.eval();
@@ -183,15 +156,15 @@ _.extend(EvalManager.prototype, {
           astNode = instruction[1];
           stack = instruction[2];
 
+          // take a checkpoint
           // TODO where should this go?
           if (typeof this.restoreIndex === "undefined") {
             if ((checkpointIDs.indexOf(astNode.id) > -1) &&
                 (this.currentIDs.indexOf(astNode.id) == -1)) {
               this.checkpoints.push(this.checkpoint());
               this.currentIDs.push(astNode.id);
-            }
-          }
-
+            };
+          };
 
           // add new eval frame
           _state = {
@@ -321,60 +294,6 @@ _.extend(EvalManager.prototype, {
       currentFrame = currentFrame.parent;
     }
 
-    // console.log(this.evalStack.state);
-    // everyone must use the same clock these aren't necessary?
-    //this.evalStack.state.stack.clock = this.clock;
-    //this.heap.clock = this.clock;
-
-    //this.heap = JSON.parse(cp.heap);
-    //_.extend(this.heap, OO.state.Heap.prototype);
-    //var vv;
-    //for(vv in this.heap._store) {
-    //  _.extend(this.heap._store[vv], OO.state.VersionedValue.prototype);
-    //  for(xx in vv._history) {
-    //    vv._history[xx][1].restoreFunctionality();
-    //  }
-    //}
-    //_.extend(this.heap._clock, OO.state.Clock.prototype);
-    //this.clock = this.heap._clock;
-    //this.classTable = JSON.parse(cp.classTable);
-    //_.extend(this.classTable, OO.state.ClassTable.prototype);
-    //this.stack = JSON.parse(cp.stack);
-    //_.extend(this.stack, OO.state.Stack.prototype);
-    //
-    //// build a list of the stack frames to index into
-    //var stackList = [];
-    //var currentFrame = this.stack;
-    //while (typeof currentFrame !== "undefined") {
-    //  stackList.push(currentFrame);
-    //  _.extend(currentFrame, OO.state.Stack.prototype);
-    //  currentFrame = currentFrame.parent;
-    //}
-    //
-    //// reconstruct eval frames
-    //var newestFrame, prevFrame, firstFrame;
-    //currentFrame = cp.evalStack;
-    //while(typeof currentFrame !== "undefined") {
-    //  _.extend(currentFrame, EvalStack.prototype);
-    //  currentState = {
-    //    heap: this.heap,
-    //    stack: stackList[currentFrame.stackLevel],
-    //    classTable: this.classTable
-    //  };
-    //  newestFrame = new EvalStack(undefined,
-    //      this.evalStack.astNode._registry.objectForId(currentFrame.ast),
-    //      currentState);
-    //  newestFrame.evaledArgs = JSON.parse(currentFrame.evaledArgsPacked);
-    //  if(typeof prevFrame !== "undefined") {
-    //    prevFrame.parent = newestFrame;
-    //  } else {
-    //    firstFrame = newestFrame;
-    //  }
-    //  prevFrame = newestFrame;
-    //  currentFrame = currentFrame.parent;
-    //}
-    //
-    //this.evalStack = firstFrame;
   }
 
 });

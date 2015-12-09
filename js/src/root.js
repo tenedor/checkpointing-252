@@ -106,7 +106,6 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
       continue;
     }
 
-
     evalM = new eval.EvalManager(savedStruct.pr[0], savedStruct.pr[1]); // error: undefined is not an object
     evalM.checkpoints = checkpoints;
     evalM.restoreIndex = i;
@@ -152,13 +151,6 @@ OO.testPageHtml = function(parsedAst) {
 };
 
 OO.queryAst = function(query, parsedAst, ioIndex) {
-  // do something here
-  //var queryAst = O.parse(query);
-  // from CP i, evaluate for max LC i (v) steps
-  // from the CP, where the max is taken over all
-  // vars v in the query.
-  // at each step, test if query is false.
-  //
 
   // a query is actually just a comma-separated list of var names
 
