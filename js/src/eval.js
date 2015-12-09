@@ -117,25 +117,32 @@ _.extend(EvalManager.prototype, {
   eval: function(checkpointIDs) {
     var complete, returnAddress, instruction, astNode, stack, _state;
     var instance, method, args, evaledArgs, addr, returnValue;
+    var lastID, ifMode;
 
     // initialize eval loop termination variables
     complete = false;
     returnAddress = undefined;
 
     // execute first instruction
+    // this is a "program"
+    // (AST ID 0)
     instruction = this.evalStack.eval();
 
     // if resuming, load correct checkpoint
     // otherwise, take first checkpoint
     if (typeof this.restoreIndex !== "undefined") {
-      this.resume(this.checkpoints[this.restoreIndex]);
+      instruction = this.resume(this.checkpoints[this.restoreIndex]);
+      if (typeof instruction === "undefined") {
+        complete = true;
+      };
+      // checkpoint is taken AFTER a clock tick
     } else {
       if (typeof this.checkpoints === "undefined") {
         this.checkpoints = [];
         this.currentIDs = [];
       };
       this.checkpoints.push(this.checkpoint());
-      this.currentIDs.push(1);
+      this.currentIDs.push(0);
     };
 
     while (!complete) {
@@ -147,6 +154,8 @@ _.extend(EvalManager.prototype, {
         };
       };
 
+
+      lastID = undefined;
       switch (instruction[0]) {
         case "skip":
           instruction = this.evalStack.eval();
@@ -156,15 +165,9 @@ _.extend(EvalManager.prototype, {
           astNode = instruction[1];
           stack = instruction[2];
 
-          // take a checkpoint
-          // TODO where should this go?
-          if (typeof this.restoreIndex === "undefined") {
-            if ((checkpointIDs.indexOf(astNode.id) > -1) &&
-                (this.currentIDs.indexOf(astNode.id) == -1)) {
-              this.checkpoints.push(this.checkpoint());
-              this.currentIDs.push(astNode.id);
-            };
-          };
+          if(astNode.type === "if") {
+            ifMode = astNode.id;
+          }
 
           // add new eval frame
           _state = {
@@ -204,17 +207,18 @@ _.extend(EvalManager.prototype, {
         case "done":
           addr = instruction[1];
 
+          lastID = this.evalStack.astNode.id;
           // pop eval stack
           this.evalStack = this.evalStack.parent;
 
           // propagate value from finished frame to current frame
           if (this.evalStack) {
             instruction = this.evalStack.updateArgs(addr);
-
           // or terminate process if eval stack is exhausted
           } else {
             complete = true;
           };
+
           break;
 
         case "return":
@@ -241,6 +245,31 @@ _.extend(EvalManager.prototype, {
 
       // increment the clock
       this.clock.tick();
+
+      // take a checkpoint
+      // TODO where should this go?
+      if ((typeof this.restoreIndex === "undefined") &&
+          (typeof lastID !== "undefined")) {
+        if ((checkpointIDs.indexOf(lastID) > -1) &&
+            (this.currentIDs.indexOf(lastID) == -1)) {
+          this.checkpoints.push(this.checkpoint(instruction));
+          this.currentIDs.push(lastID);
+        };
+      };
+
+      // if mode
+      if ((typeof this.restoreIndex === "undefined") &&
+          (typeof lastID !== "undefined") &&
+          (typeof ifMode !== "undefined")) {
+        if ((checkpointIDs.indexOf(ifMode) > -1) &&
+            (this.currentIDs.indexOf(ifMode) == -1)) {
+          this.checkpoints.push(this.checkpoint(instruction));
+          this.currentIDs.push(ifMode);
+        };
+        ifMode = undefined;
+      };
+
+
     };
 
     //if (typeof this.restoreIndex === "undefined") {
@@ -263,7 +292,7 @@ _.extend(EvalManager.prototype, {
     };
   },
 
-  checkpoint: function() {
+  checkpoint: function(instr) {
     // the heap and class table can be stored once.
     // each eval stack frame has to be checkpointed separately
     return {
@@ -273,11 +302,13 @@ _.extend(EvalManager.prototype, {
       classTable: this.classTable.checkpoint(),
       evalStack: this.evalStack.checkpoint(),
       lc: {},
-      globalTime: this.clock.time
+      globalTime: this.clock.time,
+      instruction: instr
     };
   },
 
   resume: function(cp) {
+    var t0 = performance.now();
     this.heap.resume(cp.heap);
     this.clock.resume(cp.clock);
     // we don't screw with the jets
@@ -293,7 +324,9 @@ _.extend(EvalManager.prototype, {
       currentFrame.state.classTable = this.classTable;
       currentFrame = currentFrame.parent;
     }
-
+    var t1 = performance.now();
+    console.log("resume took " + (t1-t0) + " ms");
+    return cp.instruction;
   }
 
 });
