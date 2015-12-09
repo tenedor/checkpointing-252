@@ -127,6 +127,7 @@ _.extend(EvalManager.prototype, {
     // otherwise, take first checkpoint
     if (typeof this.restoreIndex !== "undefined") {
       instruction = this.resume(this.checkpoints[this.restoreIndex]);
+      console.log("eval: starting evaluation at " + this.clock.time + " ending at " + this.maxTime);
 
       // run first instruction if this checkpoint was at program start
       if (typeof instruction === "undefined") {
@@ -146,8 +147,6 @@ _.extend(EvalManager.prototype, {
     };
 
 
-    console.log("eval: starting evaluation at " + this.clock.time + " ending at " + this.maxTime);
-    //console.log(complete);
 
     while (!complete) {
 
@@ -155,10 +154,10 @@ _.extend(EvalManager.prototype, {
       // for resume mode
       if (typeof this.restoreIndex !== "undefined") {
         if (this.clock.time > this.maxTime) {
+          console.log("eval: current step " + this.clock.time + " out of " + this.maxTime);
           break;
         };
       };
-      console.log("eval: current step " + this.clock.time + " out of " + this.maxTime);
 
 
       lastID = undefined;
