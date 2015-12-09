@@ -142,18 +142,6 @@ let rec double (e : iexp) : iexp =
 exception EncounteredDoubleHalf
 exception EncounteredHalf
 
-(* rectify inequalities by doubling appropriately *)
-let rec rectify_leq (l : iexp) (r : iexp) : iexp * iexp =
-  if (halves l) && (halves r) then raise EncounteredDoubleHalf
-  else if halves l then let r, l = rectify_geq r l in (l, r)
-  else if halves r then rectify_leq (double l) (double r)
-  else (l, r)
-and rectify_geq (l : iexp) (r : iexp) : iexp * iexp =
-  if (halves l) && (halves r) then raise EncounteredDoubleHalf
-  else if halves l then let r, l = rectify_leq r l in (l, r)
-  else if halves r then rectify_geq (Plus (double l, Int 1)) (double r)
-  else (l, r)
-
 (* convert instance to a set of constraints *)
 let constraints (i : inst) : string = 
   let rec plus_under_times (e : iexp) : string =
@@ -166,10 +154,8 @@ let constraints (i : inst) : string =
     | Var v -> v
     | Plus (e1, e2) -> (iexp_constraint e1) ^ " + " ^ (iexp_constraint e2) 
     | Times (i, e) -> (string_of_int i) ^ " * " ^ (plus_under_times e)
-    | Leq (e1, e2) -> let (e1, e2) = rectify_geq e1 e2 in
-      " ( " ^ (iexp_constraint e1) ^ " <= " ^ (iexp_constraint e2) ^ " ) "
-    | Geq (e1, e2) -> let (e1, e2) = rectify_geq e1 e2 in
-      " ( " ^ (iexp_constraint e1) ^ " >= " ^ (iexp_constraint e2) ^ " ) "
+    | Leq (e1, e2) -> " ( " ^ (iexp_constraint e1) ^ " <= " ^ (iexp_constraint e2) ^ " ) "
+    | Geq (e1, e2) -> " ( " ^ (iexp_constraint e1) ^ " >= " ^ (iexp_constraint e2) ^ " ) "
     | Not e -> " not ( " ^ (iexp_constraint e) ^ " ) "
     | Half e -> raise EncounteredHalf (*" ( " ^ (iexp_constraint e) ^ " )/2 "*)
   in
@@ -187,6 +173,18 @@ let constraints (i : inst) : string =
 
 exception EncounteredEq
 
+(* rectify inequalities by doubling appropriately *)
+let rec rectify_leq (l : iexp) (r : iexp) : iexp * iexp =
+  if (halves l) && (halves r) then raise EncounteredDoubleHalf
+  else if halves l then let r, l = rectify_geq r l in (l, r)
+  else if halves r then rectify_leq (double l) (double r)
+  else (l, r)
+and rectify_geq (l : iexp) (r : iexp) : iexp * iexp =
+  if (halves l) && (halves r) then raise EncounteredDoubleHalf
+  else if halves l then let r, l = rectify_leq r l in (l, r)
+  else if halves r then rectify_geq (Plus (double l, Int 1)) (double r)
+  else (l, r)
+
 let rec to_ineq (i : Ast.inst) : inst =
   let rec exp_to_ineq (e : Ast.exp) : iexp =
     match e with
@@ -201,7 +199,9 @@ let rec to_ineq (i : Ast.inst) : inst =
     Ast.Clause (Eq (e1, e2)) ->
       let ie1 = exp_to_ineq e1 in
       let ie2 = exp_to_ineq e2 in
-      And (Clause (Leq (ie1, ie2)), Clause (Geq (ie1, ie2)))
+      let rl1, rl2 = rectify_leq ie1 ie2 in
+      let rg1, rg2 = rectify_geq ie1 ie2 in
+      And (Clause (Leq (rl1, rl2)), Clause (Geq (rg1, rg2)))
   | Ast.Clause (Var v) -> to_ineq (Clause (Ast.Eq (Ast.Var v, Ast.Int 1)))
   | Ast.Clause (Not (Var v)) -> to_ineq (Clause (Ast.Eq (Ast.Var v, Ast.Int 0)))
   | Ast.Clause e -> Clause (exp_to_ineq e)
