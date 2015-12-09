@@ -71,14 +71,19 @@ OO.evalAST = function(parsedAst) {
   return checkpointsAndValue[1];
 };
 
+OO.evalAgainForCheckpoints = function(i) {
+  var savedStruct, checkpointsAndValue;
+  console.log("on index: " + i);
+  savedStruct = OO.io[i];
+  checkpointsAndValue = OO.evalProgramAndRegistryWithCheckpoints(savedStruct.pr, savedStruct.checkpointIDs);
+  OO.io[i].checkpoints = checkpointsAndValue[0];
+  console.log("taken: " + OO.io[i].checkpoints.length);
+}
+
 OO.evalAllAgainForCheckpoints = function() {
-  var i, savedStruct, checkpointsAndValue;
+  var i;
   for (i = 0; i < OO.io.length; i++) {
-    console.log("on index: " + i);
-    savedStruct = OO.io[i];
-    checkpointsAndValue = OO.evalProgramAndRegistryWithCheckpoints(savedStruct.pr, savedStruct.checkpointIDs);
-    OO.io[i].checkpoints = checkpointsAndValue[0];
-    console.log("taken: " + OO.io[i].checkpoints.length);
+    OO.evalAgainForCheckpoints(i);
   }
 };
 

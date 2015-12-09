@@ -123,29 +123,34 @@ _.extend(EvalManager.prototype, {
     complete = false;
     returnAddress = undefined;
 
-    // execute first instruction
-    // this is a "program"
-    // (AST ID 0)
-    instruction = this.evalStack.eval();
-
     // if resuming, load correct checkpoint
     // otherwise, take first checkpoint
     if (typeof this.restoreIndex !== "undefined") {
       instruction = this.resume(this.checkpoints[this.restoreIndex]);
+
+      // run first instruction if this checkpoint was at program start
       if (typeof instruction === "undefined") {
-        complete = true;
-      };
+        instruction = this.evalStack.eval();
+      }
       // checkpoint is taken AFTER a clock tick
     } else {
       if (typeof this.checkpoints === "undefined") {
         this.checkpoints = [];
         this.currentIDs = [];
       };
-      this.checkpoints.push(this.checkpoint());
+      this.checkpoints.push(this.checkpoint(instruction));
       this.currentIDs.push(0);
+
+      // execute first instruction
+      instruction = this.evalStack.eval();
     };
 
+
+    console.log("eval: starting evaluation at " + this.clock.time + " ending at " + this.maxTime);
+    //console.log(complete);
+
     while (!complete) {
+
 
       // for resume mode
       if (typeof this.restoreIndex !== "undefined") {
@@ -153,6 +158,7 @@ _.extend(EvalManager.prototype, {
           break;
         };
       };
+      console.log("eval: current step " + this.clock.time + " out of " + this.maxTime);
 
 
       lastID = undefined;
