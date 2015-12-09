@@ -74,9 +74,11 @@ OO.evalAST = function(parsedAst) {
 OO.evalAllAgainForCheckpoints = function() {
   var i, savedStruct, checkpointsAndValue;
   for (i = 0; i < OO.io.length; i++) {
+    console.log("on index: " + i);
     savedStruct = OO.io[i];
     checkpointsAndValue = OO.evalProgramAndRegistryWithCheckpoints(savedStruct.pr, savedStruct.checkpointIDs);
     OO.io[i].checkpoints = checkpointsAndValue[0];
+    console.log("taken: " + OO.io[i].checkpoints.length);
   }
 };
 

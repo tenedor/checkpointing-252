@@ -99,6 +99,7 @@ var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
   // and eval up to maxTime.
   this.maxTime = undefined;
   this.restoreIndex = undefined;
+  this.currentIDs = undefined;
 
   classes.declareBuiltIns(this.classTable);
 
@@ -126,6 +127,7 @@ _.extend(EvalManager.prototype, {
 
     if (typeof this.checkpoints === "undefined") {
       this.checkpoints = [];
+      this.currentIDs = [];
     }
 
     //this.checkpoints.push(this.checkpoint());
@@ -134,9 +136,9 @@ _.extend(EvalManager.prototype, {
       this.resume(this.checkpoints[this.restoreIndex]);
     } else {
       this.checkpoints.push(this.checkpoint());
+      this.currentIDs.push(1);
     }
 
-    var cp;
     while (!complete) {
       //cp = this.checkpoint();
       //this.resume(cp);
@@ -159,11 +161,18 @@ _.extend(EvalManager.prototype, {
         if (this.clock.time > this.maxTime) {
           break;
         }
-      } else {
-        if (checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) {
+      }
+
+      // TODO: where does this go?
+      if (typeof this.restoreIndex === "undefined") {
+        if ((checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) &&
+            (this.currentIDs.indexOf(this.evalStack.astNode.id) == -1)) {
           this.checkpoints.push(this.checkpoint());
+          this.currentIDs.push(this.evalStack.astNode.id);
         }
       }
+
+
       // this.resume(checkpoints[checkpoints.length-1]);
       // eval query
       //var tempQueryCp;
@@ -181,6 +190,17 @@ _.extend(EvalManager.prototype, {
         case "eval":
           astNode = instruction[1];
           stack = instruction[2];
+
+          // TODO where should this go?
+          if (typeof this.restoreIndex === "undefined") {
+
+            if ((checkpointIDs.indexOf(astNode.id) > -1) &&
+                (this.currentIDs.indexOf(astNode.id) == -1)) {
+              this.checkpoints.push(this.checkpoint());
+              this.currentIDs.push(astNode.id);
+            }
+          }
+
 
           // add new eval frame
           _state = {
@@ -203,7 +223,7 @@ _.extend(EvalManager.prototype, {
           // construct new send node - TODO: store node for checkpointing
           evaledArgs = [instance, method].concat(args);
           astNode = new ast.Send.nodeFromEvaledArgs(evaledArgs,
-              this._astRegistry); // TODO this thing is in the eval stack borking all the checkpointing
+              this._astRegistry); // TODO this thing is in the eval stack borking all the checkpointing LOL
 
           // add new eval frame
           _state = {
