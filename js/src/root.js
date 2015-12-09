@@ -17,7 +17,6 @@ OO.previousOO = previousOO;
 O.OO = OO;
 
 
-var eval = OO.eval;
 
 // Registry - map uids to objects
 var Registry = function() {
@@ -63,10 +62,52 @@ OO.evalAST = function(parsedAst) {
   OO.io[i] = {
     constraints: constraints,
     checkpointIDs: undefined,
+    checkpoints: undefined,
     pr: pr
   };
 
-  return OO.evalProgramAndRegistry(pr);
+  var checkpointsAndValue = OO.evalProgramAndRegistryWithCheckpoints(pr, []);
+  OO.io[i].checkpoints = checkpointsAndValue[0];
+  return checkpointsAndValue[1];
+};
+
+OO.evalAllAgainForCheckpoints = function() {
+  var i, savedStruct, checkpointsAndValue;
+  for (i in OO.io) {
+    savedStruct = OO.io[i];
+    checkpointsAndValue = OO.evalProgramAndRegistryWithCheckpoints(savedStruct.pr, savedStruct.checkpointIDs);
+    OO.io[i].checkpoints = checkpointsAndValue[0];
+  }
+};
+
+// evaluates pr as necessary given checkpoints and set of variables for queries
+OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
+  var eval = OO.eval;
+  var evalM, savedStruct, checkpoints;
+  savedStruct = OO.io[ioIndex];
+  checkpoints = savedStruct.checkpoints;
+  var i, j, varName, checkpoint, maxTime;
+  var t0 = performance.now();
+  for (i in checkpoints) {
+    evalM = new eval.EvalManager(savedStruct.pr[0], savedStruct.pr[1]); // error: undefined is not an object
+    evalM.checkpoints = checkpoints;
+    evalM.restoreIndex = i;
+    checkpoint = checkpoints[i];
+    maxTime = checkpoint.globalTime;
+    for (j in querySet) {
+      varName = querySet[j];
+      if (typeof checkpoint.lc[varName] !== "undefined") {
+        if (checkpoint.lc[varName] > maxTime) {
+          console.log("the LCT was greater than (relative) 0")
+          maxTime = checkpoint.lc[varName];
+        }
+      }
+    }
+    evalM.maxTime = maxTime;
+    evalM.eval([]);
+  }
+  var t1 = performance.now();
+  console.log("The eval of " + ioIndex + " took " + (t1 - t0) + " ms" );
 };
 
 OO.evalProgramAndRegistry = function(pr) {
@@ -78,7 +119,8 @@ OO.evalProgramAndRegistry = function(pr) {
 OO.evalProgramAndRegistryWithCheckpoints = function(pr, checkpointIDs) {
   var eval = OO.eval;
   var evalManager = new eval.EvalManager(pr[0], pr[1]);
-  return evalManager.eval(checkpointIDs);
+  var finalValue = evalManager.eval(checkpointIDs);
+  return [evalManager.checkpoints, finalValue];
 };
 
 OO.testPageHtml = function(parsedAst) {
@@ -111,7 +153,10 @@ OO.queryAst = function(query, parsedAst, ioIndex) {
   // at each step, test if query is false.
   //
 
-  // a query is actually just a comma-separated list of
+  // a query is actually just a comma-separated list of var names
+
+  var listOfVariables = query.split(",");
+  OO.evalFromCheckpointsAndQuerySet(listOfVariables, ioIndex);
 
   return "some result";
 };

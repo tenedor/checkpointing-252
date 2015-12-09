@@ -93,7 +93,12 @@ var EvalManager = eval.EvalManager = function(astNode, astRegistry) {
   this.heap = new state.Heap(this.clock);
   this.classTable = new state.ClassTable(this.clock);
 
-  this.checkpoints = [];
+  this.checkpoints = undefined;
+  // if restoreIndex / maxTime are set,
+  // then we restore from checkpoints[restoreIndex]
+  // and eval up to maxTime.
+  this.maxTime = undefined;
+  this.restoreIndex = undefined;
 
   classes.declareBuiltIns(this.classTable);
 
@@ -119,10 +124,18 @@ _.extend(EvalManager.prototype, {
     // execute first instruction
     instruction = this.evalStack.eval();
 
-    //this.checkpoints.push(this.checkpoint());
+    if (typeof this.checkpoints === "undefined") {
+      this.checkpoints = [];
+    }
 
-    this.checkpoints.push(this.checkpoint());
+    //this.checkpoints.push(this.checkpoint());
     // eval loop
+    if (typeof this.restoreIndex !== "undefined") {
+      this.resume(this.checkpoints[this.restoreIndex]);
+    } else {
+      this.checkpoints.push(this.checkpoint());
+    }
+
     while (!complete) {
 
 
@@ -139,9 +152,16 @@ _.extend(EvalManager.prototype, {
   //    console.log(this.evalStack.state.stack);
       // this.evalstack.astnode.id
       // TODO: optimize?
-      //if (checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) {
-      //    checkpoints.push(this.checkpoint());
-      //}
+
+      if (typeof this.restoreIndex !== "undefined") {
+        if (this.clock.time > this.maxTime) {
+          break;
+        }
+      } else {
+        if (checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) {
+          this.checkpoints.push(this.checkpoint());
+        }
+      }
       // this.resume(checkpoints[checkpoints.length-1]);
       // eval query
       //var tempQueryCp;
@@ -236,6 +256,10 @@ _.extend(EvalManager.prototype, {
       // increment the clock
       this.clock.tick();
     };
+
+    //if (typeof this.restoreIndex === "undefined") {
+    //  this.checkpoints.push(this.checkpoint());
+    //}
 
     //console.log("lc last cp at t = " + this.checkpoints[this.checkpoints.length - 1].globalTime
     //      + " : " + this.checkpoints[this.checkpoints.length - 1].lc);
