@@ -26,8 +26,10 @@ toplevel: com yacc
 	$(TOPLEVEL) -o ps1toplevel ast.cmo parse.cmo lex.cmo eval.cmo test.cmo
 
 test: oocparse
-	./oocparse test/example_vars.ooc > test/output_vars.ampl
-	./oocparse test/example_if.ooc > test/output_if.ampl
+	for i in test/example_*.ooc ; \
+  do \
+    ./oocparse $$i > `echo $$i | sed -e 's/example/output/;s/ooc/ampl/'` ; \
+  done
 
 clean:
 	-rm *.cmo *.cmi oocparse parse.ml parse.mli lex.ml test/output_*.ampl
