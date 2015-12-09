@@ -89,9 +89,6 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
   var i, j, varName, checkpoint, maxTime;
   var t0 = performance.now();
   for (i = 0; i < checkpoints.length; i++) {
-    evalM = new eval.EvalManager(savedStruct.pr[0], savedStruct.pr[1]); // error: undefined is not an object
-    evalM.checkpoints = checkpoints;
-    evalM.restoreIndex = i;
     checkpoint = checkpoints[i];
     maxTime = checkpoint.globalTime;
     for (j = 0; j < querySet.length; j++) {
@@ -103,11 +100,19 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
         }
       }
     }
+    if (maxTime === checkpoint.globalTime) {
+      continue;
+    }
+
+
+    evalM = new eval.EvalManager(savedStruct.pr[0], savedStruct.pr[1]); // error: undefined is not an object
+    evalM.checkpoints = checkpoints;
+    evalM.restoreIndex = i;
     evalM.maxTime = maxTime;
     evalM.eval([]);
   }
   var t1 = performance.now();
-  console.log("The eval of " + ioIndex + " took " + (t1 - t0) + " ms" );
+  console.log("The eval of example program " + ioIndex + " took " + (t1 - t0) + " ms" );
 };
 
 OO.evalProgramAndRegistry = function(pr) {
