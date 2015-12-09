@@ -59,7 +59,7 @@ _.extend(EvalStack.prototype, {
 
     var i;
     var currentFrame = this;
-    for (i in packedData) {
+    for (i = 0; i < packedData.length; i++) {
       if (typeof packedData[i][0] === "number") {
         currentFrame.astNode = this.astRegistry.objectForId(packedData[i][0]);
       } else {
@@ -136,8 +136,10 @@ _.extend(EvalManager.prototype, {
       this.checkpoints.push(this.checkpoint());
     }
 
+    var cp;
     while (!complete) {
-
+      //cp = this.checkpoint();
+      //this.resume(cp);
 
       //if (this.checkpoints.length > 0) {
       //  console.log("lc last cp at t = " + this.checkpoints[this.checkpoints.length - 1].globalTime
@@ -362,14 +364,8 @@ _.extend(EvalManager.prototype, {
     //}
     //
     //this.evalStack = firstFrame;
-  },
-
-  markNodes: function(listOfNodes) {
-    var listOfNodeIds = listOfNodes.split(",");
-    for(i in listOfNodeIds) {
-      this.evalStack.astNode._registry.objectForId(Number(listOfNodeIds[i])).takeCheckpoint = null;
-    }
   }
+
 });
 
 })();

@@ -61,7 +61,7 @@ OO.evalAST = function(parsedAst) {
   var i = OO.io.length;
   OO.io[i] = {
     constraints: constraints,
-    checkpointIDs: undefined,
+    checkpointIDs: [],
     checkpoints: undefined,
     pr: pr
   };
@@ -73,7 +73,7 @@ OO.evalAST = function(parsedAst) {
 
 OO.evalAllAgainForCheckpoints = function() {
   var i, savedStruct, checkpointsAndValue;
-  for (i in OO.io) {
+  for (i = 0; i < OO.io.length; i++) {
     savedStruct = OO.io[i];
     checkpointsAndValue = OO.evalProgramAndRegistryWithCheckpoints(savedStruct.pr, savedStruct.checkpointIDs);
     OO.io[i].checkpoints = checkpointsAndValue[0];
@@ -88,17 +88,17 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
   checkpoints = savedStruct.checkpoints;
   var i, j, varName, checkpoint, maxTime;
   var t0 = performance.now();
-  for (i in checkpoints) {
+  for (i = 0; i < checkpoints.length; i++) {
     evalM = new eval.EvalManager(savedStruct.pr[0], savedStruct.pr[1]); // error: undefined is not an object
     evalM.checkpoints = checkpoints;
     evalM.restoreIndex = i;
     checkpoint = checkpoints[i];
     maxTime = checkpoint.globalTime;
-    for (j in querySet) {
+    for (j = 0; j < querySet.length; j++) {
       varName = querySet[j];
       if (typeof checkpoint.lc[varName] !== "undefined") {
         if (checkpoint.lc[varName] > maxTime) {
-          console.log("the LCT was greater than (relative) 0")
+          // console.log("the LCT was greater than (relative) 0");
           maxTime = checkpoint.lc[varName];
         }
       }

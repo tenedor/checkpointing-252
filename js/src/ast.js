@@ -297,6 +297,7 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
       varName = evaledArgs[i];
       addr = evaledArgs[i + 1];
       s.stack.declareVar(varName, addr);
+      evalManager.checkpoints[evalManager.checkpoints.length - 1].lc[varName] = s.stack._clock.time;
     };
     return ["done", undefined];
   }
