@@ -163,14 +163,6 @@ _.extend(EvalManager.prototype, {
         }
       }
 
-      // TODO: where does this go?
-      if (typeof this.restoreIndex === "undefined") {
-        if ((checkpointIDs.indexOf(this.evalStack.astNode.id) > -1) &&
-            (this.currentIDs.indexOf(this.evalStack.astNode.id) == -1)) {
-          this.checkpoints.push(this.checkpoint());
-          this.currentIDs.push(this.evalStack.astNode.id);
-        }
-      }
 
 
       // this.resume(checkpoints[checkpoints.length-1]);
@@ -193,7 +185,6 @@ _.extend(EvalManager.prototype, {
 
           // TODO where should this go?
           if (typeof this.restoreIndex === "undefined") {
-
             if ((checkpointIDs.indexOf(astNode.id) > -1) &&
                 (this.currentIDs.indexOf(astNode.id) == -1)) {
               this.checkpoints.push(this.checkpoint());
