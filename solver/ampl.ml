@@ -14,36 +14,86 @@ let remove_var vs s =
 let set_union v1 v2 = VarSet.union v1 v2
 let set_to_list vs = VarSet.elements vs
 
+(* inequality expressions: purely in terms of inequalities *)
+type iexp =
+  Int of int
+| Var of var
+| Plus of iexp * iexp
+| Times of int * iexp
+| Leq of iexp * iexp
+| Geq of iexp * iexp
+| Not of iexp
+| Half of iexp
+
+(* new instruction type uses iexps *)
+type inst =
+  Clause of iexp
+| And of inst * inst
+| Or of inst * inst
+
+let rec iexp_tostring (e : iexp) : string =
+  let plus_under_times (e : iexp) : string =
+    match e with
+      Plus (e1, e2) -> "(" ^ (iexp_tostring e) ^ ")"
+    | _ -> iexp_tostring e
+  in
+  match e with
+    Int i -> string_of_int i
+  | Var v -> v
+  | Plus (e1, e2) -> (plus_under_times e1) ^ " + " ^ (plus_under_times e2)
+  | Times (i, e2) -> (string_of_int i) ^ " * " ^ (iexp_tostring e2)
+  | Geq (e1, e2) -> (iexp_tostring e1) ^ " >= " ^ (iexp_tostring e2)
+  | Leq (e1, e2) -> (iexp_tostring e1) ^ " <= " ^ (iexp_tostring e2)
+  | Not e -> "!(" ^ (iexp_tostring e) ^ ")"
+  | Half e -> "(" ^ (iexp_tostring e) ^ ")/2"
+
+let inst_tostring (p : inst) : string =
+  let rec spaces (i : int) : string =
+    if i = 0 then ""
+    else " " ^ (spaces (i - 1))
+  in
+  let rec or_under_and margin i =
+    match i with
+      Or (_, _) -> "(\n" ^ (spaces (margin + 1)) ^ (indented (margin + 1) i) ^ "\n)"
+    | _ -> indented margin i
+  and indented (margin : int) (p : inst) =
+    match p with
+      Clause e -> "(" ^ (iexp_tostring e) ^ ")"
+    | And (i1, i2) -> (or_under_and margin i1) ^ " &\n" ^ (spaces margin) ^ (or_under_and margin i2)
+    | Or (i1, i2) -> (indented margin i1) ^ " | " ^ (indented margin i2)
+  in (indented 0 p)
+
 (* collect binary parameters: cp *)
 let collect_params (i : inst) : var_set =
-  let rec collect_params_exp (e : exp) : var_set =
+  let rec collect_params_iexp (e : iexp) : var_set =
     match e with
       Int _ -> empty_set
     | Var v -> if (String.sub v 0 2) = "cp" then add_var empty_set v else empty_set
-    | Plus (e1, e2) | Eq (e1, e2) -> set_union (collect_params_exp e1) (collect_params_exp e2)
-    | Not e | Half e -> collect_params_exp e
+    | Plus (e1, e2) | Leq (e1, e2) | Geq (e1, e2) ->
+      set_union (collect_params_iexp e1) (collect_params_iexp e2)
+    | Times (_, e) | Not e | Half e -> collect_params_iexp e
   in
   let rec collect_params_inst (i : inst) : var_set =
     match i with
-      Clause e -> collect_params_exp e
+      Clause e -> collect_params_iexp e
     | And (i1, i2) | Or (i1, i2) -> set_union (collect_params_inst i1) (collect_params_inst i2)
   in collect_params_inst i
 
 (* collect variables: n, k, B *)
 let collect_vars (i : inst) : var_set = 
-  let rec collect_vars_exp (e : exp) : var_set =
+  let rec collect_vars_iexp (e : iexp) : var_set =
     match e with
       Int _ -> empty_set
     | Var v -> let head = String.sub v 0 1 in
       if head = "n" || head = "k" || head = "B"
       then add_var empty_set v
       else empty_set
-    | Plus (e1, e2) | Eq (e1, e2) -> set_union (collect_vars_exp e1) (collect_vars_exp e2)
-    | Not e | Half e -> collect_vars_exp e
+    | Plus (e1, e2) | Leq (e1, e2) | Geq (e1, e2) -> set_union (collect_vars_iexp e1) (collect_vars_iexp e2)
+    | Times (_, e) | Not e | Half e -> collect_vars_iexp e
   in
   let rec collect_vars_inst (i : inst) : var_set =
     match i with
-      Clause e -> collect_vars_exp e
+      Clause e -> collect_vars_iexp e
     | And (i1, i2) | Or (i1, i2) -> set_union (collect_vars_inst i1) (collect_vars_inst i2)
   in collect_vars_inst i
 
@@ -51,7 +101,7 @@ let collect_vars (i : inst) : var_set =
 let decl_params (p : var_set) : string = 
   let rec decl_param_list (pl : string list) : string =
     match pl with
-      p :: pr -> "param " ^ p ^ " binary;\n" ^ (decl_param_list pr)
+      p :: pr -> "var " ^ p ^ " binary;\n" ^ (decl_param_list pr)
     | _ -> ""
   in decl_param_list (set_to_list p)
 
@@ -68,29 +118,99 @@ let minimization (cp_km : float) (q_km : float) : string =
   "minimize prog_cost : " ^
   (string_of_float cp_km) ^ " * n2 + " ^ (string_of_float q_km) ^ " * k2 ;\n"
 
+(* contains a halving operation? *)
+let rec halves (e : iexp) : bool = 
+  match e with
+    Int i -> false
+  | Var v -> false
+  | Plus (e1, e2) | Leq (e1, e2) | Geq (e1, e2) -> (halves e1) || (halves e2)
+  | Times (_, e) | Not e -> halves e
+  | Half e -> true
+
+(* double the expression, distribute and simplify *)
+let rec double (e : iexp) : iexp = 
+  match e with
+    Int i -> Int (2 * i)
+  | Var v -> Times (2, e)
+  | Plus (e1, e2) -> Plus (double e1, double e2)
+  | Times (i, e) -> Times (2 * i, e)
+  | Leq (e1, e2) -> Leq (double e1, double e2)
+  | Geq (e1, e2) -> Geq (double e1, double e2)
+  | Not e -> double e
+  | Half e -> e
+
+exception EncounteredDoubleHalf
+exception EncounteredHalf
+
+(* rectify inequalities by doubling appropriately *)
+let rec rectify_leq (l : iexp) (r : iexp) : iexp * iexp =
+  if (halves l) && (halves r) then raise EncounteredDoubleHalf
+  else if halves l then let r, l = rectify_geq r l in (l, r)
+  else if halves r then rectify_leq (double l) (double r)
+  else (l, r)
+and rectify_geq (l : iexp) (r : iexp) : iexp * iexp =
+  if (halves l) && (halves r) then raise EncounteredDoubleHalf
+  else if halves l then let r, l = rectify_leq r l in (l, r)
+  else if halves r then rectify_geq (Plus (double l, Int 1)) (double r)
+  else (l, r)
+
 (* convert instance to a set of constraints *)
 let constraints (i : inst) : string = 
-  let rec exp_constraint (e : exp) : string =
+  let rec plus_under_times (e : iexp) : string =
+    match e with
+      Plus (_, _) -> " ( " ^ (iexp_constraint e) ^ " ) "
+    | _ -> (iexp_constraint e)
+  and iexp_constraint (e : iexp) : string =
     match e with
       Int i -> string_of_int i
     | Var v -> v
-    | Plus (e1, e2) -> " ( " ^ (exp_constraint e1) ^ " + " ^ (exp_constraint e2) ^ " ) "
-    | Eq (e1, e2) -> " ( " ^ (exp_constraint e1) ^ " = " ^ (exp_constraint e2) ^ " ) "
-    | Not e -> " ( not ( " ^ (exp_constraint e) ^ " )) "
-    | Half e -> " ( ( " ^ (exp_constraint e) ^ " )/2 ) "
+    | Plus (e1, e2) -> (iexp_constraint e1) ^ " + " ^ (iexp_constraint e2) 
+    | Times (i, e) -> (string_of_int i) ^ " * " ^ (plus_under_times e)
+    | Leq (e1, e2) -> let (e1, e2) = rectify_geq e1 e2 in
+      " ( " ^ (iexp_constraint e1) ^ " <= " ^ (iexp_constraint e2) ^ " ) "
+    | Geq (e1, e2) -> let (e1, e2) = rectify_geq e1 e2 in
+      " ( " ^ (iexp_constraint e1) ^ " >= " ^ (iexp_constraint e2) ^ " ) "
+    | Not e -> " not ( " ^ (iexp_constraint e) ^ " ) "
+    | Half e -> raise EncounteredHalf (*" ( " ^ (iexp_constraint e) ^ " )/2 "*)
   in
-  let rec inst_constraint (i : inst) : string =
+  let rec or_under_and (i : inst) : string =
     match i with
-      Clause e -> (match e with
-        Var v -> (exp_constraint (Eq (Var v, Int 1)))
-      | Not (Var v) -> (exp_constraint (Eq (Var v, Int 0)))
-      | _ -> exp_constraint e)
-    | And (i1, i2) -> " ( " ^ (inst_constraint i1) ^ " and " ^ (inst_constraint i2) ^ " ) \n"
-    | Or (i1, i2) -> " ( " ^ (inst_constraint i1) ^ " or " ^ (inst_constraint i2) ^ " ) \n"
+      Or (_, _) -> " ( " ^ (inst_constraint i) ^ " ) "
+    | _ -> (inst_constraint i)
+  and inst_constraint (i : inst) : string =
+    match i with
+      Clause e -> (iexp_constraint e) ^ "\n"
+    | And (i1, i2) -> (or_under_and i1) ^ " and " ^ (or_under_and i2)
+    | Or (i1, i2) -> (inst_constraint i1) ^ " or " ^ (inst_constraint i2) 
   in
   "subject to prog_cond : \n" ^ (inst_constraint i) ^ " ; \n"
 
-let ampl (i : inst) : string =
+exception EncounteredEq
+
+let rec to_ineq (i : Ast.inst) : inst =
+  let rec exp_to_ineq (e : Ast.exp) : iexp =
+    match e with
+      Ast.Int i -> Int i
+    | Ast.Var v -> Var v
+    | Ast.Plus (e1, e2) -> Plus ((exp_to_ineq e1), (exp_to_ineq e2))
+    | Ast.Eq (e1, e2) -> raise EncounteredEq
+    | Ast.Not e -> Not (exp_to_ineq e)
+    | Ast.Half e -> Half (exp_to_ineq e)
+  in
+  match i with
+    Ast.Clause (Eq (e1, e2)) ->
+      let ie1 = exp_to_ineq e1 in
+      let ie2 = exp_to_ineq e2 in
+      And (Clause (Leq (ie1, ie2)), Clause (Geq (ie1, ie2)))
+  | Ast.Clause (Var v) -> to_ineq (Clause (Ast.Eq (Ast.Var v, Ast.Int 1)))
+  | Ast.Clause (Not (Var v)) -> to_ineq (Clause (Ast.Eq (Ast.Var v, Ast.Int 0)))
+  | Ast.Clause e -> Clause (exp_to_ineq e)
+  | Ast.And (i1, i2) -> And ((to_ineq i1), (to_ineq i2))
+  | Ast.Or (i1, i2) -> Or ((to_ineq i1), (to_ineq i2))
+
+let ampl (i : Ast.inst) : string =
+  let i = to_ineq i in
+  (* prerr_endline (inst_tostring i); (* enable for AST output *) *) 
   let par_decl = decl_params (collect_params i) in
   let var_decl = decl_vars (collect_vars i) in
   let min = (minimization 0. 1.) in
@@ -103,82 +223,4 @@ let ampl (i : inst) : string =
     min ^
     "### 4. CONSTRAINTS ###\n" ^
     subj
-
-(*
-(* We're going to represent memory for Fish programs using a 
- * Hashtable mapping variables to integer references. *)
-
-let vartable = Hashtbl.create 33
-  
-(* Create a string hash table with initial size 33 *)
-(* val vartable : int ref StringHash.hashTable = StringHash.new 33 *)
-
-(* Lookup a variable's ref in the hash table.  If it doesn't have
- * an entry, just insert a new one in the hashtable. *)
-let lookup (x:var) = 
-  try (Hashtbl.find vartable x) 
-  with Not_found ->
-    let r = ref 0 in
-    Hashtbl.add vartable x r;
-    r
-
-(* Set a variables value in the hash table -- again, if the variable
- * wasn't there previously, then we'll just insert a fresh ref. *)
-let set (x:var) (i:int) : int = 
-  let r = lookup x in
-    r := i; i
-
-let bool2int (b:bool):int = if b then 1 else 0
-
-(* Evaluate a Fish expression returning an integer *)
-let rec eval_exp ((e:rexp),(pos:int)) : int = 
-  match e with
-    Int i -> i
-  | Var x -> !(lookup x)
-  | Binop(e1,b,e2) ->
-      let (i1,i2) = (eval_exp e1, eval_exp e2) in (
-        match b with
-          Plus -> i1 + i2
-        | Minus -> i1 - i2
-        | Times -> i1 * i2
-        | Div -> i1 / i2
-        | Eq -> bool2int (i1 = i2) 
-        | Neq -> bool2int (i1 <> i2) 
-        | Lt -> bool2int (i1 < i2)
-        | Lte -> bool2int (i1 <= i2)
-        | Gt -> bool2int (i1 > i2)
-        | Gte -> bool2int (i1 >= i2)
-      ) 
-  | Not e1 -> bool2int (eval_exp e1 = 0) 
-  | And(e1,e2) -> 
-      if (eval_exp e1) <> 0 then eval_exp e2 else 0
-  | Or(e1,e2) ->
-      if (eval_exp e1) <> 0 then 1 else eval_exp e2
-  | Assign(x,e1) -> set x (eval_exp e1)
-
-(* Evaluate a fish statement.  We signal "returning" a value
- * for the program by throwing the exception Done.  *)
-exception Done of int
-
-let rec eval_stmt ((s:rstmt),(pos:int)) : unit = 
-  match s with 
-    Exp e -> let _ = eval_exp e in () 
-  | Seq(s1,s2) -> (eval_stmt s1; eval_stmt s2)
-  | If(e,s1,s2) -> 
-      if (eval_exp e) <> 0 then eval_stmt s1 else eval_stmt s2
-  | While(e,s1) -> eval_stmt (If(e,(Seq(s1,(s,pos)),pos),(skip,pos)),pos)
-  | For(e1,e2,e3,s1) -> (
-      let _ = eval_exp e1 in
-      eval_stmt (While(e2, (Seq(s1,(Exp e3,pos)),pos)), pos)
-    )
-  | Return e -> raise (Done (eval_exp e))
-
-exception BadProgram
-
-let eval (p:program):int = 
-  try
-    (eval_stmt p; 
-     print_string "Error -- program terminated without returning!\n";
-     raise BadProgram
-    ) with Done i -> i*)
 
