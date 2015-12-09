@@ -83,6 +83,14 @@ OO.evalAllAgainForCheckpoints = function() {
 };
 
 // evaluates pr as necessary given checkpoints and set of variables for queries
+OO.totalExecutionTime = 0;
+OO.totalExecutions = 0;
+
+OO.resetExecutionCounters = function() {
+  OO.totalExecutionTime = 0;
+  OO.totalExecutions = 0;
+}
+
 OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
   var eval = OO.eval;
   var evalM, savedStruct, checkpoints;
@@ -113,7 +121,10 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
     evalM.eval([]);
   }
   var t1 = performance.now();
+  OO.totalExecutionTime += t1 - t0;
   console.log("The eval of example program " + ioIndex + " took " + (t1 - t0) + " ms" );
+  OO.totalExecutions += 1;
+  console.log("Average of " + OO.totalExecutions + " evaluations is " + (OO.totalExecutionTime / OO.totalExecutions));
 };
 
 OO.evalProgramAndRegistry = function(pr) {
