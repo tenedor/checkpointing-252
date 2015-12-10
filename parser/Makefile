@@ -5,11 +5,10 @@
 COMPILER=ocamlc
 TOPLEVEL=ocamlmktop
 
-all: clean yacc test
+ampl: clean yacc testampl
 
 com:
 	$(COMPILER) -c ast.ml
-	$(COMPILER) -c ampl.ml
 
 # to debug the parser, export OCAMLRUNPARAM='p'
 yacc: com
@@ -18,14 +17,17 @@ yacc: com
 	$(COMPILER) -c parse.ml
 	ocamllex lex.mll
 	$(COMPILER) -c lex.ml
-	$(COMPILER) -c oocparse.ml
-	$(COMPILER) -o oocparse ast.cmo parse.cmo lex.cmo ampl.cmo oocparse.cmo
 
-toplevel: com yacc
+toampl:
+	$(COMPILER) -c ampl.ml
+	$(COMPILER) -c toampl.ml
+	$(COMPILER) -o toampl ast.cmo parse.cmo lex.cmo ampl.cmo toampl.cmo
+
+toplevel: com yacc toampl
 	$(COMPILER) -c test.ml
-	$(TOPLEVEL) -o topoocparse ast.cmo parse.cmo lex.cmo ampl.cmo test.cmo
+	$(TOPLEVEL) -o toptoampl ast.cmo parse.cmo lex.cmo ampl.cmo test.cmo
 
-test: oocparse
+testampl: toampl
 	for i in test/example_*.ooc ; \
   do \
     ./oocparse $$i > `echo $$i | sed -e 's/example/output/;s/ooc/ampl/'` ; \
