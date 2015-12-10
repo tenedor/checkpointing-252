@@ -14,6 +14,7 @@ let remove_var vs s =
 let set_union v1 v2 = VarSet.union v1 v2
 let set_to_list vs = VarSet.elements vs
 let set_contains vs s = VarSet.mem s vs
+let set_tostring vs = String.concat " " (set_to_list vs)
 
 (* inequality expressions: purely in terms of inequalities *)
 type cond = var
@@ -22,18 +23,30 @@ type asst =
   Assign of exp
 | If of cond * exp * exp
 
+let asst_tostring a =
+  match a with
+    Assign e -> "= " ^ (exp_tostring e)
+  | If (c, e1, e2) ->
+      "= if " ^ c ^
+      "\nthen " ^ (exp_tostring e1) ^
+      "\nelse " ^ (exp_tostring e2)
+
 module VarMap = Map.Make(struct type t = var let compare = compare end)
 type dep_map = var_set VarMap.t
 let empty_map = VarMap.empty
 let dep_map_get m n = VarMap.find n m
 let dep_map_remove m n = VarMap.remove n m
 let dep_map_choose m = VarMap.choose m
+let dep_map_contains m n = VarMap.mem n m
 let dep_map_is_empty m = VarMap.is_empty m
-let dep_map_map f m = VarMap.map f m
+let dep_map_tostring m = VarMap.fold
+  (fun k -> fun a -> fun b -> b ^ k ^ " : " ^ (set_tostring a) ^ "\n")
+  m ""
 
 type asst_map = asst VarMap.t
 let asst_map_get m v = VarMap.find v m
 let asst_map_add m v a = VarMap.add v a m
+let asst_map_map f m = VarMap.map f m
 exception DoubleDefined
 let asst_map_merge m1 m2 = VarMap.merge (fun k -> fun a -> fun b ->
   match (a, b) with
@@ -42,17 +55,21 @@ let asst_map_merge m1 m2 = VarMap.merge (fun k -> fun a -> fun b ->
   | (Some _, Some _) -> raise DoubleDefined
   | (None, None) -> None)
   m1 m2
+let asst_map_tostring m = VarMap.fold
+  (fun k -> fun a -> fun b -> b ^ k ^ " = " ^ (asst_tostring a) ^ "\n")
+  m ""
 
-exception MalformedConstraints
+exception MalformedConstraints of string
 let rec extract_ifs (c : cond) (at : Ast.inst) (af : Ast.inst) =
   match (at, af) with
     (And (Assign (v1, e1), atr), And (Assign (v2, e2), afr)) ->
-    if v1 != v2 then raise MalformedConstraints
+    if v1 <> v2 then
+      raise (MalformedConstraints "in an if case, vars not equal")
     else asst_map_add (extract_ifs c atr afr) v1 (If (c, e1, e2))
   | (Assign (v1, e1), Assign (v2, e2)) ->
-    if v1 != v2 then raise MalformedConstraints
+    if v1 <> v2 then raise (MalformedConstraints "last and of if case, vars not equal")
     else asst_map_add empty_map v1 (If (c, e1, e2))
-  | _ -> raise MalformedConstraints
+  | _ -> raise (MalformedConstraints "this Or is not an if case")
 
 let rec extract_assts (i : Ast.inst) : asst_map =
   match i with
@@ -60,9 +77,11 @@ let rec extract_assts (i : Ast.inst) : asst_map =
   | And (i1, i2) -> asst_map_merge (extract_assts i1) (extract_assts i2)
   | Or ((And (True c1, at)), 
         (And (False c2, af))) ->
-    if c1 != c2 then raise MalformedConstraints
+    if c1 <> c2 then
+      raise (MalformedConstraints ("if case, cp not equal: " ^
+        c1 ^ ", " ^ c2 ^ "\n" ^ (inst_tostring i)))
     else extract_ifs c1 at af
-  | _ -> raise MalformedConstraints
+  | _ -> raise (MalformedConstraints "not an Assign, And, or if case")
 
 let collect_vars (a : asst) : var_set =
   let rec collect_vars_exp (e : exp) : var_set =
@@ -82,11 +101,13 @@ exception NotADag
 let extract_order (d : dep_map) : var list =
   let rec visit (node : var) (avoid : var_set)
                 (order : var list) (depmap : dep_map) : (var list) * dep_map =
-    if set_contains avoid node then raise NotADag else
     let children = dep_map_get depmap node in
     let av = add_var avoid node in
     let (new_order, new_depmap) = List.fold_left
-      (fun (ord, dep) -> fun m -> visit m (add_var av m) ord dep)
+      (fun (ord, dep) -> fun m ->
+        if set_contains avoid m then raise NotADag
+        else if not (dep_map_contains dep m) then (ord, dep)
+        else visit m (add_var av m) ord dep)
       (order, depmap)
       (set_to_list children)
     in
@@ -108,13 +129,13 @@ let rec stringify_assts (assts : asst_map) (order : var list) : string =
       "int " ^ v ^ " = " ^
       (match a with
         Assign e -> (exp_tostring e)
-      | If (c, e1, e2) -> c ^ "? (" ^ (exp_tostring e1) ^ ") : (" ^ (exp_tostring e2) ^ ")")
+      | If (c, e1, e2) -> c ^ " ? (" ^ (exp_tostring e1) ^ ") : (" ^ (exp_tostring e2) ^ ")")
       ^ ";\n" ^ stringify_assts assts rest
   | [] -> ""
 
 let c (i : Ast.inst) : string =
   let assts = extract_assts i in
-  let deps = dep_map_map (fun e -> collect_vars e) assts in
+  let deps = asst_map_map (fun e -> collect_vars e) assts in
   let order = List.rev (extract_order deps) in (* rev(toposort(dag)) ?= toposort(rev(dag)) *)
   stringify_assts assts order
 
