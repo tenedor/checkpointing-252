@@ -131,16 +131,73 @@ tests(O,
   },
   {
     name: 'fibonacci',
-    code: 'var limit = 1000;' +
-          'var x = 0;' +
-          'var y = 1;' +
-          'while (y < limit) {' +
-          'var t = x + y;' +
-          '  x = y;' +
-          '  y = t;' +
-          '}' +
-          'y;'
+    code: 'var limit = 1000;\n' +
+          'var x = 0;\n' +
+          'var y = 1;\n' +
+          'while (y < limit) {\n' +
+          'var t = x + y;\n' +
+          '  x = y;\n' +
+          '  y = t;\n' +
+          '}\n' +
+          'y;',
     expected: 1597
- }
+  },
+  {
+    name: 'adder sim',
+    code: 'var x = 2;\n' +
+          'var y = 3;\n' +
+          'if (x < 0 or x > 3 or y < 0 or y > 3) {\n' +
+          '  return -1;\n' +
+          '}\n' +
+          'var x1;\n' +
+          'if (x >= 2) {\n' +
+          '  x1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  x1 = 0;\n' +
+          '}\n' +
+          'var x0 = x - 2 * x1;\n' +
+          'var y1;\n' +
+          'if (y >= 2) {\n' +
+          '  y1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  y1 = 0;\n' +
+          '}\n' +
+          'var y0 = y - 2 * y1;\n' +
+          'var s0;\n' +
+          'if ((x0 or y0) and !(x0 and y0)) {\n' +
+          '  s0 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  s0 = 0;\n' +
+          '}\n' +
+          'var c1;\n' +
+          'if (x0 and y0) {\n' +
+          '  c1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  c1 = 0;\n' +
+          '}\n' +
+          'var s1;\n' +
+          'if (x1 and y1 and c1\n' +
+          '    or x1 and !y1 and !c1\n' +
+          '    or !x1 and y1 and !c1\n' +
+          '    or !x1 and !y1 and c1) {\n' +
+          '  s1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  s1 = 0;\n' +
+          '}\n' +
+          'var c2;\n' +
+          'if (x1 and y1 or x1 and c1 or y1 and c1) {\n' +
+          '  c2 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  c2 = 0;\n' +
+          '}\n' +
+          '4 * c2 + 2 * s1 + s0;',
+    expected = 5
+  }
 );
 
