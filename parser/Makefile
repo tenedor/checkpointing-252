@@ -29,12 +29,20 @@ testampl: toampl
 
 ampl: clean yacc testampl
 
-c: yacc
+toc: yacc
 	$(COMPILER) -c c.ml
 	$(COMPILER) -c toc.ml
 	$(COMPILER) -o toc ast.cmo parse.cmo lex.cmo c.cmo toc.cmo
 
-toc: clean yacc c
+testc : toc
+	for i in test/example_*.ooc ; \
+	do \
+		name=$$(echo $$i | sed -e 's/example/solve/;s/\.ooc//') ; \
+		./toc $$i > $${name}.c ; \
+		gcc --std=c11 -O3 -o $$name $${name}.c ; \
+	done
+
+c: clean yacc testc
 
 toplevel: com yacc toampl
 	$(COMPILER) -c test.ml

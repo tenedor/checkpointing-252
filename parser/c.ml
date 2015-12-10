@@ -15,6 +15,7 @@ let set_union v1 v2 = VarSet.union v1 v2
 let set_to_list vs = VarSet.elements vs
 let set_contains vs s = VarSet.mem s vs
 let set_tostring vs = String.concat " " (set_to_list vs)
+let set_size vs = VarSet.cardinal vs
 
 (* inequality expressions: purely in terms of inequalities *)
 type cond = var
@@ -123,19 +124,74 @@ let extract_order (d : dep_map) : var list =
       in start new_order new_depmap
   in start [] d
 
+let prologue =
+  "#include <stdio.h>\n\n" ^
+  "int main(int argc, char* argv) {\n"^
+  "  unsigned long long best_bits = 0;\n" ^
+  "  unsigned int best_score = -1;\n"
+
+let rec collect_cps (i : Ast.inst) : var_set =
+  match i with
+    Assign _ -> empty_set
+  | True v -> add_var empty_set v
+  | False v -> add_var empty_set v
+  | And (i1, i2) -> set_union (collect_cps i1) (collect_cps i2)
+  | Or (i1, i2) -> set_union (collect_cps i1) (collect_cps i2)
+
+let break_bits (cps : var_set) (i : int) : string =
+  let rec extract_decls (cps : var list) : string =
+    match cps with
+      cp :: cpr -> "  unsigned int " ^ cp ^ ";\n" ^ (extract_decls cpr)
+    | [] -> ""
+  in
+  let rec extract_defs (cps : var list) : string =
+    match cps with
+      cp :: cpr -> "    " ^ cp ^ " = flag & 1; flag >>= 1;\n" ^ (extract_defs cpr)
+    | [] -> ""
+  in
+  let cplist = set_to_list cps in
+  (extract_decls cplist) ^
+  "  for (unsigned long long bits = 0; bits < 1ULL << " ^ (string_of_int i) ^ "; bits++) {\n" ^
+  "    unsigned int flag = bits;\n" ^
+  (extract_defs cplist)
+
 let rec stringify_assts (assts : asst_map) (order : var list) : string =
   match order with
     v :: rest -> let a = asst_map_get assts v in
-      "int " ^ v ^ " = " ^
+      "    unsigned int " ^ v ^ " = " ^
       (match a with
         Assign e -> (exp_tostring e)
       | If (c, e1, e2) -> c ^ " ? (" ^ (exp_tostring e1) ^ ") : (" ^ (exp_tostring e2) ^ ")")
       ^ ";\n" ^ stringify_assts assts rest
   | [] -> ""
 
+let epilogue (cps : var_set) (n : int) (k : int) = "\n" ^
+  let rec extract_prints (cps : var list) : string =
+    match cps with
+      cp :: cpr ->
+        "  " ^ cp ^ " = best_bits & 1; best_bits >>= 1;\n" ^
+        "  printf(\"" ^ cp ^ " = %d\\n\", " ^ cp ^ ");\n" ^
+        (extract_prints cpr)
+    | [] -> ""
+  in
+  "    unsigned int score = " ^ (string_of_int n) ^ " * n2 + " ^ (string_of_int k) ^ " * k2;\n" ^
+  "    if (score < best_score) {\n" ^
+  "      printf(\"new best: %llu\\n\", bits);\n" ^
+  "      best_bits = bits;\n" ^
+  "      best_score = score;\n" ^
+  "    }\n" ^
+  "  }\n\n" ^
+  "  printf(\"score: %d\\nbits: %llu \\n\", best_score, best_bits);\n" ^
+  (extract_prints (set_to_list cps)) ^
+  "}\n"
+
 let c (i : Ast.inst) : string =
   let assts = extract_assts i in
   let deps = asst_map_map (fun e -> collect_vars e) assts in
   let order = List.rev (extract_order deps) in (* rev(toposort(dag)) ?= toposort(rev(dag)) *)
-  stringify_assts assts order
+  let cps = collect_cps i in
+  (prologue) ^
+  (break_bits cps (set_size cps)) ^
+  (stringify_assts assts order) ^
+  (epilogue cps 1 3)
 
