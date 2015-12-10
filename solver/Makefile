@@ -23,7 +23,7 @@ yacc: com
 
 toplevel: com yacc
 	$(COMPILER) -c test.ml
-	$(TOPLEVEL) -o ps1toplevel ast.cmo parse.cmo lex.cmo eval.cmo test.cmo
+	$(TOPLEVEL) -o topoocparse ast.cmo parse.cmo lex.cmo ampl.cmo test.cmo
 
 test: oocparse
 	for i in test/example_*.ooc ; \
@@ -32,4 +32,4 @@ test: oocparse
   done
 
 clean:
-	-rm *.cmo *.cmi oocparse parse.ml parse.mli lex.ml test/output_*.ampl
+	-rm *.cmo *.cmi oocparse topoocparse parse.ml parse.mli lex.ml test/output_*.ampl
