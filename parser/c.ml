@@ -111,7 +111,7 @@ let extract_order (d : dep_map) : var list =
       (order, depmap)
       (set_to_list children)
     in
-    (node :: new_order, dep_map_remove depmap node) 
+    (node :: new_order, dep_map_remove new_depmap node) 
   in
   let rec start (order : var list) (d : dep_map) : var list =
     if dep_map_is_empty d then
