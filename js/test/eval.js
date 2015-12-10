@@ -146,7 +146,7 @@ tests(O,
     name: 'adder sim',
     code: 'var x = 2;\n' +
           'var y = 3;\n' +
-          'if (x < 0 or x > 3 or y < 0 or y > 3) {\n' +
+          'if (x < 0 or (x > 3 or (y < 0 or y > 3))) {\n' +
           '  return -1;\n' +
           '}\n' +
           'var x1;\n' +
@@ -166,38 +166,38 @@ tests(O,
           '}\n' +
           'var y0 = y - 2 * y1;\n' +
           'var s0;\n' +
-          'if ((x0 or y0) and !(x0 and y0)) {\n' +
+          'if ((x0 != 0 or y0 != 0) and !(x0 != 0 and y0 != 0)) {\n' +
           '  s0 = 1;\n' +
           '}\n' +
           'else {\n' +
           '  s0 = 0;\n' +
           '}\n' +
           'var c1;\n' +
-          'if (x0 and y0) {\n' +
+          'if (x0 != 0 and y0 != 0) {\n' +
           '  c1 = 1;\n' +
           '}\n' +
           'else {\n' +
           '  c1 = 0;\n' +
           '}\n' +
           'var s1;\n' +
-          'if (x1 and y1 and c1\n' +
-          '    or x1 and !y1 and !c1\n' +
-          '    or !x1 and y1 and !c1\n' +
-          '    or !x1 and !y1 and c1) {\n' +
+          'if ((x1 != 0 and (y1 != 0 and c1 != 0))\n' +
+          '    or ((x1 != 0 and (y1 == 0 and c1 == 0))\n' +
+          '    or ((x1 == 0 and (y1 != 0 and c1 == 0))\n' +
+          '    or (x1 == 0 and (y1 == 0 and c1 != 0))))) {\n' +
           '  s1 = 1;\n' +
           '}\n' +
           'else {\n' +
           '  s1 = 0;\n' +
           '}\n' +
           'var c2;\n' +
-          'if (x1 and y1 or x1 and c1 or y1 and c1) {\n' +
+          'if ((x1 != 0 and y1 != 0) or ((x1 != 0 and c1 != 0) or (y1 != 0 and c1 != 0))) {\n' +
           '  c2 = 1;\n' +
           '}\n' +
           'else {\n' +
           '  c2 = 0;\n' +
           '}\n' +
           '4 * c2 + 2 * s1 + s0;',
-    expected = 5
+    expected: 5
   }
 );
 
