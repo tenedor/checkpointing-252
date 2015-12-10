@@ -44,7 +44,9 @@ input:
   instance EOF { $1 }
 
 instance:
-    exp { Clause $1 }
+  | VAR EQ exp { Assign ($1, $3) }
+  | VAR { True $1 }
+  | NOT VAR { False $2 }
   | instance AND instance { And ($1, $3) }
   | instance OR instance { Or ($1, $3) }
   | LPAREN instance RPAREN { $2 }
@@ -55,8 +57,6 @@ exp:
   | VAR { Var($1) }
   | LBRACKET exp RBRACKET { $2 }
   | exp PLUS exp { Plus ($1, $3) }
-  | exp EQ exp { Eq ($1, $3) }
-  | NOT exp { Not $2 }
   | exp HALF { Half $1 }
 ;
 
