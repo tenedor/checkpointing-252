@@ -7,11 +7,9 @@ TOPLEVEL=ocamlmktop
 
 ampl: clean yacc testampl
 
-com:
-	$(COMPILER) -c ast.ml
-
 # to debug the parser, export OCAMLRUNPARAM='p'
-yacc: com
+yacc: 
+	$(COMPILER) -c ast.ml
 	ocamlyacc parse.mly
 	$(COMPILER) -c parse.mli
 	$(COMPILER) -c parse.ml
@@ -30,8 +28,8 @@ toplevel: com yacc toampl
 testampl: toampl
 	for i in test/example_*.ooc ; \
   do \
-    ./oocparse $$i > `echo $$i | sed -e 's/example/output/;s/ooc/ampl/'` ; \
+    ./toampl $$i > `echo $$i | sed -e 's/example/output/;s/ooc/ampl/'` ; \
   done
 
 clean:
-	-rm *.cmo *.cmi oocparse topoocparse parse.ml parse.mli lex.ml test/output_*.ampl
+	-rm *.cmo *.cmi toampl toptoampl parse.ml parse.mli lex.ml test/output_*.ampl
