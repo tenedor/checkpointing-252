@@ -29,11 +29,11 @@ open Lexing
  * The comparison operators are non associative, as they don't appear together
  * Finally, the operators increase in precedence as you go down the list */
 
-%left OR
-%left AND
+%right OR
+%right AND
 
 %nonassoc EQ
-%left PLUS
+%right PLUS
 %left HALF
 %right NOT
 
