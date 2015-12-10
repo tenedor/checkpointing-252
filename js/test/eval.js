@@ -128,6 +128,19 @@ tests(O,
           'var y = new Object();\n' +
           'x == y',
     expected: false
-  }
+  },
+  {
+    name: 'fibonacci',
+    code: 'var limit = 1000;' +
+          'var x = 0;' +
+          'var y = 1;' +
+          'while (y < limit) {' +
+          'var t = x + y;' +
+          '  x = y;' +
+          '  y = t;' +
+          '}' +
+          'y;'
+    expected: 1597
+ }
 );
 
