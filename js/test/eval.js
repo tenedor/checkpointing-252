@@ -198,6 +198,29 @@ tests(O,
           '}\n' +
           '4 * c2 + 2 * s1 + s0;',
     expected: 5
+  },
+  {
+    name: 'nested if',
+    code: 'var a = 2;\n' +
+          'var b = 2;\n' +
+          'var c = 1;\n' +
+          'var x = 0;\n' +
+          'if (a == 1) {\n' +
+          '  if (b == 1) {\n' +
+          '    if (c == 1) { x = 1; } else { x = 2; }\n' +
+          '  } else {\n' +
+          '    if (c == 1) { x = 3; } else { x = 4; }\n' +
+          '  }\n' +
+          '} else {\n' +
+          '  if (b == 1) {\n' +
+          '    if (c == 1) { x = 5; } else { x = 6; }\n' +
+          '  } else {\n' +
+          '    if (c == 1) { x = 7; } else { x = 8; }\n' +
+          '  }\n' +
+          '}\n' +
+          'return x;',
+    expected: 7
   }
+
 );
 
