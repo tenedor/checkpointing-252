@@ -220,6 +220,16 @@ tests(O,
           '}\n' +
           'return x;',
     expected: 7
+  },
+  {
+    name: 'triangle numbers',
+    code: 'var x = 0; var i = 0; var j = 0;\n' +
+          'while (i < 10) {\n' +
+          '  x = x + i;\n' +
+          '  i = i + 1;\n' +
+          '}\n' +
+          'return x;',
+    expected: 45
   }
 
 );
