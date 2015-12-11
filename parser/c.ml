@@ -138,7 +138,7 @@ let rec collect_cps (i : Ast.inst) : var_set =
   | And (i1, i2) -> set_union (collect_cps i1) (collect_cps i2)
   | Or (i1, i2) -> set_union (collect_cps i1) (collect_cps i2)
 
-let break_bits (cps : var_set) (i : int) : string =
+let break_bits (cps : var_set) : string =
   let rec extract_decls (cps : var list) : string =
     match cps with
       cp :: cpr -> "  unsigned int " ^ cp ^ ";\n" ^ (extract_decls cpr)
@@ -151,7 +151,7 @@ let break_bits (cps : var_set) (i : int) : string =
   in
   let cplist = set_to_list cps in
   (extract_decls cplist) ^
-  "  for (unsigned long long bits = 0; bits < 1ULL << " ^ (string_of_int i) ^ "; bits++) {\n" ^
+  "  for (unsigned long long bits = 0; bits < 1ULL << " ^ (set_size cps) ^ "; bits++) {\n" ^
   "    unsigned int flag = bits;\n" ^
   (extract_defs cplist)
 
@@ -190,8 +190,9 @@ let c (i : Ast.inst) : string =
   let deps = asst_map_map (fun e -> collect_vars e) assts in
   let order = List.rev (extract_order deps) in (* rev(toposort(dag)) ?= toposort(rev(dag)) *)
   let cps = collect_cps i in
+  prerr_endline ("number of cps is " ^ (set_size cps))
   (prologue) ^
-  (break_bits cps (set_size cps)) ^
+  (break_bits cps) ^
   (stringify_assts assts order) ^
   (epilogue cps 1 3)
 
