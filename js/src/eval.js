@@ -118,7 +118,7 @@ _.extend(EvalManager.prototype, {
     var complete, returnAddress, instruction, astNode, stack, _state;
     var instance, method, args, evaledArgs, addr, returnValue;
     var lastID, ifMode;
-    var t0, t1;
+    var t2, t3;
 
     // initialize eval loop termination variables
     complete = false;
@@ -127,7 +127,7 @@ _.extend(EvalManager.prototype, {
     // if resuming, load correct checkpoint
     // otherwise, take first checkpoint
     if (typeof this.restoreIndex !== "undefined") {
-      t0 = performance.now();
+      t2 = performance.now();
 
       instruction = this.resume(this.checkpoints[this.restoreIndex]);
       console.log("eval: starting evaluation at " + this.clock.time + " ending at " + this.maxTime);
@@ -159,9 +159,8 @@ _.extend(EvalManager.prototype, {
       if (typeof this.restoreIndex !== "undefined") {
         if (this.clock.time > this.maxTime) {
           console.log("eval: current step " + this.clock.time + " out of " + this.maxTime);
-          t1 = performance.now();
-          OO.totalRecomputationTime += (t1 - t0);
-          OO.totalRecomputations += 1;
+          t3 = performance.now();
+          OO.totalRecomputationTime += (t3 - t2);
           break;
         };
       };
@@ -339,7 +338,6 @@ _.extend(EvalManager.prototype, {
     var t1 = performance.now();
     console.log("resume took " + (t1-t0) + " ms");
     OO.totalResumeTime += (t1 - t0);
-    OO.totalResumes += 1;
     return cp.instruction;
   }
 

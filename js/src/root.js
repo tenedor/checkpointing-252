@@ -91,11 +91,9 @@ OO.evalAllAgainForCheckpoints = function() {
 OO.totalExecutionTime = 0;
 OO.totalExecutions = 0;
 
-// timing of resumes
 OO.totalResumeTime = 0;
 OO.totalResumes = 0;
 
-// timing of recomputations
 OO.totalRecomputationTime = 0;
 OO.totalRecomputations = 0;
 
@@ -115,6 +113,10 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
   checkpoints = savedStruct.checkpoints;
   var i, j, varName, checkpoint, maxTime;
   var t0 = performance.now();
+  OO.oneResumes = 0;
+  OO.oneResumeTime = 0;
+  OO.oneRecomputations = 0;
+  OO.oneRecomputationTime = 0;
   for (i = 0; i < checkpoints.length; i++) {
     checkpoint = checkpoints[i];
     maxTime = checkpoint.globalTime;
@@ -131,6 +133,7 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
       continue;
     }
 
+    // recomputation
     evalM = new eval.EvalManager(savedStruct.pr[0], savedStruct.pr[1]); // error: undefined is not an object
     evalM.checkpoints = checkpoints;
     evalM.restoreIndex = i;
@@ -142,8 +145,8 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
   console.log("The eval of example program " + ioIndex + " took " + (t1 - t0) + " ms" );
   OO.totalExecutions += 1;
   console.log("Total time: average of " + OO.totalExecutions + " evaluations is " + (OO.totalExecutionTime / OO.totalExecutions));
-  console.log("Resume time: average of " + OO.totalResumes + " evaluations is " + (OO.totalResumeTime / OO.totalResumes));
-  console.log("Recomputation time: average of " + OO.totalRecomputations + " evaluations is " + (OO.totalRecomputationTime / OO.totalRecomputations));
+  console.log("Resume time: average of " + OO.totalExecutions + " evaluations is " + (OO.totalResumeTime / OO.totalExecutions));
+  console.log("Recomputation time: average of " + OO.totalExecutions + " evaluations is " + (OO.totalRecomputationTime / OO.totalExecutions));
 };
 
 OO.evalProgramAndRegistry = function(pr) {
@@ -158,6 +161,10 @@ OO.evalProgramAndRegistryWithCheckpoints = function(pr, checkpointIDs) {
   var finalValue = evalManager.eval(checkpointIDs);
   return [evalManager.checkpoints, finalValue];
 };
+
+OO.getTotalNumberOfProgramPoints = function(ioIndex) {
+  console.log(OO.io[ioIndex].pr[1]._registry.length);
+}
 
 OO.testPageHtml = function(parsedAst) {
   var ioIndex = OO.io.length - 1;
