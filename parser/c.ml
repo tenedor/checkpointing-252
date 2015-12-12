@@ -126,7 +126,7 @@ let extract_order (d : dep_map) : var list =
 
 let prologue =
   "#include <stdio.h>\n\n" ^
-  "int main(int argc, char* argv) {\n"^
+  "int main() {\n"^
   "  unsigned long long best_bits = 0;\n" ^
   "  unsigned int best_score = -1;\n"
 
@@ -195,5 +195,5 @@ let c (i : Ast.inst) : string =
   (prologue) ^
   (break_bits cps) ^
   (stringify_assts assts order) ^
-  (epilogue cps 1 3)
+  (epilogue cps 1 10)
 
