@@ -297,7 +297,9 @@ var VarDecls = ast.VarDecls = ast.Nodes["varDecls"] = Stmt.extend({
       varName = evaledArgs[i];
       addr = evaledArgs[i + 1];
       s.stack.declareVar(varName, addr);
-      evalManager.checkpoints[evalManager.checkpoints.length - 1].lc[varName] = s.stack._clock.time;
+      if (typeof evalManager.restoreIndex === "undefined") {
+        evalManager.checkpoints[evalManager.checkpoints.length - 1].lc[varName] = s.stack._clock.time;
+      }
     };
     return ["done", undefined];
   }
@@ -318,7 +320,9 @@ var SetVar = ast.SetVar = ast.Nodes["setVar"] = Stmt.extend({
     var addr = evaledArgs[1];
     s.stack.setVarToAddr(varName, addr);
     //console.log("checkpoints size " + evalManager.checkpoints.length);
-    evalManager.checkpoints[evalManager.checkpoints.length - 1].lc[varName] = s.stack._clock.time;
+    if (typeof evalManager.restoreIndex === "undefined") {
+      evalManager.checkpoints[evalManager.checkpoints.length - 1].lc[varName] = s.stack._clock.time;
+    }
     // console.log(evalManager.checkpoints[evalManager.checkpoints.length - 1].lc);
     //console.log("lc set for " + varName +
     //    ", rel t = " + eval.checkpoints[eval.checkpoints.length - 1].lc[varName] +

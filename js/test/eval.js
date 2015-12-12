@@ -1,4 +1,107 @@
 tests(O,
+	
+  {
+    name: 'fibonacci',
+    code: 'var limit = 1000;\n' +
+          'var x = 0;\n' +
+          'var y = 1;\n' +
+          'while (y < limit) {\n' +
+          'var t = x + y;\n' +
+          '  x = y;\n' +
+          '  y = t;\n' +
+          '}\n' +
+          'y;',
+    expected: 1597
+  },
+  {
+    name: 'adder sim',
+    code: 'var x = 2;\n' +
+          'var y = 3;\n' +
+          'if (x < 0 or (x > 3 or (y < 0 or y > 3))) {\n' +
+          '  return -1;\n' +
+          '}\n' +
+          'var x1;\n' +
+          'if (x >= 2) {\n' +
+          '  x1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  x1 = 0;\n' +
+          '}\n' +
+          'var x0 = x - 2 * x1;\n' +
+          'var y1;\n' +
+          'if (y >= 2) {\n' +
+          '  y1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  y1 = 0;\n' +
+          '}\n' +
+          'var y0 = y - 2 * y1;\n' +
+          'var s0;\n' +
+          'if ((x0 != 0 or y0 != 0) and !(x0 != 0 and y0 != 0)) {\n' +
+          '  s0 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  s0 = 0;\n' +
+          '}\n' +
+          'var c1;\n' +
+          'if (x0 != 0 and y0 != 0) {\n' +
+          '  c1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  c1 = 0;\n' +
+          '}\n' +
+          'var s1;\n' +
+          'if ((x1 != 0 and (y1 != 0 and c1 != 0))\n' +
+          '    or ((x1 != 0 and (y1 == 0 and c1 == 0))\n' +
+          '    or ((x1 == 0 and (y1 != 0 and c1 == 0))\n' +
+          '    or (x1 == 0 and (y1 == 0 and c1 != 0))))) {\n' +
+          '  s1 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  s1 = 0;\n' +
+          '}\n' +
+          'var c2;\n' +
+          'if ((x1 != 0 and y1 != 0) or ((x1 != 0 and c1 != 0) or (y1 != 0 and c1 != 0))) {\n' +
+          '  c2 = 1;\n' +
+          '}\n' +
+          'else {\n' +
+          '  c2 = 0;\n' +
+          '}\n' +
+          '4 * c2 + 2 * s1 + s0;',
+    expected: 5
+  },
+  {
+    name: 'nested if',
+    code: 'var a = 2;\n' +
+          'var b = 2;\n' +
+          'var c = 1;\n' +
+          'var x = 0;\n' +
+          'if (a == 1) {\n' +
+          '  if (b == 1) {\n' +
+          '    if (c == 1) { x = 1; } else { x = 2; }\n' +
+          '  } else {\n' +
+          '    if (c == 1) { x = 3; } else { x = 4; }\n' +
+          '  }\n' +
+          '} else {\n' +
+          '  if (b == 1) {\n' +
+          '    if (c == 1) { x = 5; } else { x = 6; }\n' +
+          '  } else {\n' +
+          '    if (c == 1) { x = 7; } else { x = 8; }\n' +
+          '  }\n' +
+          '}\n' +
+          'return x;',
+    expected: 7
+  },
+  {
+    name: 'triangle numbers',
+    code: 'var x = 0; var i = 0; var j = 0;\n' +
+          'while (i < 10) {\n' +
+          '  x = x + i;\n' +
+          '  i = i + 1;\n' +
+          '}\n' +
+          'return x;',
+    expected: 45
+  },
   {
     name: 'fibonacci',
     code: 'var limit = 1000;\n' +

@@ -91,9 +91,21 @@ OO.evalAllAgainForCheckpoints = function() {
 OO.totalExecutionTime = 0;
 OO.totalExecutions = 0;
 
+// timing of resumes
+OO.totalResumeTime = 0;
+OO.totalResumes = 0;
+
+// timing of recomputations
+OO.totalRecomputationTime = 0;
+OO.totalRecomputations = 0;
+
 OO.resetExecutionCounters = function() {
   OO.totalExecutionTime = 0;
   OO.totalExecutions = 0;
+  OO.totalResumeTime = 0;
+  OO.totalResumes = 0;
+  OO.totalRecomputationTime = 0;
+  OO.totalRecomputations = 0;
 }
 
 OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
@@ -129,7 +141,9 @@ OO.evalFromCheckpointsAndQuerySet = function(querySet, ioIndex) {
   OO.totalExecutionTime += t1 - t0;
   console.log("The eval of example program " + ioIndex + " took " + (t1 - t0) + " ms" );
   OO.totalExecutions += 1;
-  console.log("Average of " + OO.totalExecutions + " evaluations is " + (OO.totalExecutionTime / OO.totalExecutions));
+  console.log("Total time: average of " + OO.totalExecutions + " evaluations is " + (OO.totalExecutionTime / OO.totalExecutions));
+  console.log("Resume time: average of " + OO.totalResumes + " evaluations is " + (OO.totalResumeTime / OO.totalResumes));
+  console.log("Recomputation time: average of " + OO.totalRecomputations + " evaluations is " + (OO.totalRecomputationTime / OO.totalRecomputations));
 };
 
 OO.evalProgramAndRegistry = function(pr) {
