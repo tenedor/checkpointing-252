@@ -159,8 +159,6 @@ _.extend(EvalManager.prototype, {
       if (typeof this.restoreIndex !== "undefined") {
         if (this.clock.time > this.maxTime) {
           console.log("eval: current step " + this.clock.time + " out of " + this.maxTime);
-          t3 = performance.now();
-          OO.totalRecomputationTime += (t3 - t2);
           break;
         };
       };
@@ -279,9 +277,14 @@ _.extend(EvalManager.prototype, {
         };
         ifMode = undefined;
       };
-
+	  
 
     };
+
+	if (typeof this.restoreIndex !== "undefined") {
+        t3 = performance.now();
+        OO.totalRecomputationTime += (t3 - t2);
+	}
 
     //if (typeof this.restoreIndex === "undefined") {
     //  this.checkpoints.push(this.checkpoint());
